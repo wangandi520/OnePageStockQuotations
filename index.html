@@ -1,0 +1,2208 @@
+<!DOCTYPE html> 
+<html>
+	<head> 
+		<title>单页面投资行情</title>
+		<meta charset="gb2312">
+		<link rel="shortcut icon" href="favicon.ico"/>
+		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+		<script type="text/javascript" src="http://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+		<script type="text/javascript" src="http://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+		<script type="text/javascript" src="http://www.eastmoney.com/js/StockSuggest.js"></script>
+		<script type="text/javascript" language="JavaScript">
+		//weather add js http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=js
+			setTimeout(function(){
+				var arg = {
+				text: "代码、名称、拼音或缩写",
+				autoSubmit: false,
+				width: 255,
+				header: ["选项", "代码", "名称", "类型"],
+				body: [-1, 1, 4, -2],
+				callback: function(arg) {
+					setSelector(arg.type);
+					getIncompleteContent();
+				}
+			};
+			var ss = new StockSuggest("content", arg);
+			}, 500);
+		</script>
+		<script type="text/javascript">
+		//http://stocks.sina.cn/mystock/index?type=sh
+		var interval01 = 0;
+		var interval02 = 0;
+		
+		//禁用alert();
+		window.alert = function(){
+			return ;
+		}
+		
+		function setSelector(arg){
+		/*
+			"0": "未知",
+			"1": "A 股",
+			"2": "B 股",
+			"3": "权证",
+			"4": "期货",
+			"5": "债券",
+			"10": "基金",
+			"11": "开基",
+			"12": "ETF",
+			"13": "LOF",
+			"14": "货基",
+			"15": "QDII",
+			"16": "封基",
+			"21": "港股",
+			"22": "窝轮",
+			"31": "美股",
+			"32": "外期",
+			"40": "指数",
+			"50": "期指",
+			"51": "国债期货"
+		*/
+			var returnValue = '';
+			//add new type
+			switch (arg){
+				case '1':
+					$('#selector').val('stock');
+					break;
+				case '10': case '11':
+					$('#selector').val('fund');
+					break;
+				case '21':
+					$('#selector').val('hkstock');
+					break;
+				case '31':
+					$('#selector').val('usstock');
+					break;
+				case '4':
+					$('#selector').val('future');
+					break;
+				case '32':
+					$('#selector').val('forex');
+					break;
+				case '40':
+					$('#selector').val('zs');
+					break;
+				case '50':
+					$('#selector').val('if');
+					break;
+				case '51':
+					$('#selector').val('tf');
+					break;
+				case '5':
+					$('#selector').val('bond');
+					break;
+				default:
+					break;
+			}
+		}
+		
+		function getSelector(arg){
+		//add new type
+			var returnValue = '';
+			switch (arg){
+				case 'stock':
+					returnValue = 'A股';
+					break;
+				case 'fund':
+					returnValue = '基金';
+					break;
+				case 'hkstock':
+					returnValue = '港股';
+					break;
+				case 'usstock':
+					returnValue = '美股';
+					break;
+				case 'future':
+					returnValue = '期货';
+					break;
+				case 'forex':
+					returnValue = '外汇';
+					break;
+				case 'zs':
+					returnValue = '指数';
+					break;
+				case 'if':
+					returnValue = '股指期货';
+					break;
+				case 'tf':
+					returnValue = '国债期货';
+					break;
+				case 'bond':
+					returnValue = '债券';
+					break;	
+				default:
+					break;
+				}
+			return returnValue;
+		}
+		
+		function baseSearch(code, mode){
+			if (mode == 'usstock'){
+				code = code.toLowerCase();
+			}
+			else if (mode == 'future'){
+				code = code.toUpperCase();
+			}
+			else if (mode == 'forex'){
+				code = code.toUpperCase();
+			}
+			else if (mode == 'if'){
+				code = code.toUpperCase();
+			}
+			else if (mode == 'tf'){
+				code = code.toUpperCase();
+			}
+			$.ajax({
+				dataType:'script',
+				url:'http://hq.sinajs.cn/list=' + code,
+				cache: true,
+				async: false,
+				success:function(){
+					var result = '';
+					var elements = new Array();
+					result = eval('hq_str_' + code);
+					var oldInfo = $('#oldInfo').html();
+					elements = result.split(',');
+					writeToHtml(code, elements, mode, oldInfo, result);
+                }
+			});
+			
+		}
+		
+		function listSearch(code, mode){
+			setCurrentTime();
+			var newCode = code.split(',');
+			if (code == '')
+			return;
+			$.ajax({
+				dataType:'script',
+				url:'http://hq.sinajs.cn/list=' + code,
+				cache: true,
+				async: false,
+				success:function(){
+					//result数据的数组
+					var result = new Array();
+					//code代码的数组
+					for(var i = 0; i < newCode.length; i++){
+						result[i] = eval("hq_str_" + newCode[i]);
+					}
+					writeToMyStock(code, result, mode);
+				}
+			});
+		}
+		
+		function writeToMyStock(code, result, mode){
+		//add new type
+			var info = '';
+			var storage = window.localStorage;
+			code = code.split(',');
+			mode = mode.split(',');
+			for (var i = 0; i < code.length; ++i){
+				var elements = result[i].split(',');
+				if (mode[i] == 'zs'){
+					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + Number(elements[3]).toFixed(2) + ',' + ((elements[3] - elements[2]).toFixed(2) / elements[2] * 100).toFixed(2) + '%' + ',' + elements[30] + ' ' + elements[31];
+				}
+				else if (mode[i] == 'stock'){
+					var zhangdie = ((elements[3] - elements[2]).toFixed(2) / elements[2] * 100).toFixed(2) + '%';
+					if (elements[3] == 0)
+						zhangdie = '0.00%';
+					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + elements[3] + ',' + zhangdie + ',' + elements[30] + ' ' + elements[31] + ',' + elements[2];
+				}
+				else if (mode[i] == 'bond'){
+					var zhangdie = ((elements[3] - elements[2]).toFixed(2) / elements[2] * 100).toFixed(2) + '%';
+					if (elements[3] == 0)
+						zhangdie = '0.00%';
+					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + elements[3] + ',' + zhangdie + ',' + elements[30] + ' ' + elements[31];
+				}
+				else if (mode[i] == 'fund'){
+					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + parseFloat(elements[1]).toFixed(4) + ',' +  parseFloat(elements[2]).toFixed(3) + ',' + elements[4];
+				}
+				else if (mode[i] == 'future'){
+					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + elements[8] + ',' + ((elements[8] - elements[10]) / elements[10] * 100).toFixed(2) + '%' + ',' + elements[17];
+				}
+				else if (mode[i] == 'hkstock'){
+					info = code[i] + ',' + mode[i] + ',' + elements[1] + ',' +  Number(elements[6]).toFixed(2) + ',' + Number(elements[8]).toFixed(2) + '%' + ',' + elements[17] + ' ' + elements[18];
+				}
+				else if (mode[i] == 'usstock'){
+					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + Number(elements[1]).toFixed(2) + ',' + Number(elements[2]).toFixed(2) + '%' + ',' + elements[3];
+				}
+				else if (mode[i] == 'forex'){
+					info = code[i] + ',' + mode[i] + ',' + elements[9] + ',' + Number(elements[8]).toFixed(4) + ',' + Number((Number(elements[8] - elements[3]).toFixed(4) / elements[3]) * 100).toFixed(4) + '%' + ',' + elements[0];
+				}
+				else if (mode[i] == 'if'){
+					info = code[i] + ',' + mode[i] + ',' + code[i].substr(7,13) + ',' + Number(elements[3]).toFixed(1) + ',' + Number((Number(elements[3] - elements[14]).toFixed(4) / elements[14]) * 100).toFixed(2) + '%' + ',' + elements[36] + ' ' + elements[37];
+				}
+				else if (mode[i] == 'tf'){
+					info = code[i] + ',' + mode[i] + ',' + code[i].substr(7,13) + ',' + Number(elements[3]).toFixed(1) + ',' + Number((Number(elements[3] - elements[14]).toFixed(4) / elements[14]) * 100).toFixed(2) + '%' + ',' + elements[36] + ' ' + elements[37];
+				}
+				else if (mode[i] == 'b'){
+					info = code[i] + ',' + mode[i] + ',' + code[i].substr(7,13) + ',' + Number(elements[3]).toFixed(1) + ',' + Number((Number(elements[3] - elements[14]).toFixed(4) / elements[14]) * 100).toFixed(2) + '%' + ',' + elements[36] + ' ' + elements[37];
+				}
+				localStorage.setItem(code[i],info);
+			}
+			loadMyStockData();
+		}
+		
+		function writeToMin(){
+		//add new type
+			var value = $('#addInfo').html();
+			if (!value)
+				return;
+			value = value.split(',');
+			var code = value[0];
+			var mode = value[1];
+			if (mode == 'zs'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'stock'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'fund'){
+			}
+			else if (mode == 'future'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/v5/finance/futures/wap/minline/310/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'hkstock'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/hk_stock/wap_min4/' + code.substr(5, 10) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'usstock'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/v5/usstock/min/' + code.substr(4, 10) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'forex'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/v5/forex/real/min30_w03/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'if'){
+				$('#picMin img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/minw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'tf'){
+				$('#picMin img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/minw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'bond'){
+				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
+			}
+		}
+		
+		function writeToDaily(){
+		//add new type
+			var value = $('#addInfo').html();
+			if (!value)
+				return;
+			value = value.split(',');
+			var code = value[0];
+			var mode = value[1];
+			if (mode == 'zs'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'stock'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'fund'){
+			}
+			else if (mode == 'future'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/v5/finance/futures/wap/daily/310/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'hkstock'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/hk_stock/daily_wap4/' + code.substr(5, 10) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'usstock'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/usstock/daily/' + code.substr(4, 10) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'forex'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/v5/forex/k/day_w03/' + code + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'if'){
+				$('#picDaily img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/kdayw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'tf'){
+				$('#picDaily img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/kdayw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+			}
+			else if (mode == 'bond'){
+				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
+			}
+		}
+		
+		function setBackgroundColor(color){
+			$('#info').css('background','white'); 
+			$('#info a').css('color','black'); 
+			$('#info span').css('color',color); 
+		}
+		
+		function clear5Dang(){
+			for (var i = 1; i <= 11; ++i){
+				if (i == 6)
+					continue;
+				$('#mainPrice ul:first-child li:eq(' + i + ') span:eq(3)').html('');
+			}
+		}
+		
+		function writeToHtml(code, elements, mode, oldInfo, result){
+		//add new type
+			if (mode == 'zs'){
+				$('#mainPrice').removeClass().addClass('zsMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = (elements[3] - elements[2]).toFixed(2);
+				var zhangdie100 = (zhangdie / elements[2] * 100).toFixed(2) + '%';
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code + ',zs">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><span>' + Number(elements[3]).toFixed(2) + '</span><span>' 
+						+ symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[0] + ',' + Number(elements[3]).toFixed(2) + ',' + zhangdie100 + ',' + elements[30] + ' ' + elements[31] + '</span>');
+				$('#info').css('background',color); 
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[0] + ' ' + Number(elements[3]).toFixed(2) + ' ' + symbol + zhangdie  + ' ' + symbol + zhangdie100;
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[30]).getDay()];
+				$('#time').html('<span>更新日期 ' + elements[30] + ' ' + elements[31] + ' ' + week +  ' CST</span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>最新</span><span>' + Number(elements[3]).toFixed(2)
+				+ '</span><span>昨收</span><span>' + Number(elements[2]).toFixed(2)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>今开</span><span>' + Number(elements[1]).toFixed(2)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[4]).toFixed(2)
+				+ '</span></li><li><span>成交量(万手)</span><span>' + Number(elements[8] / 1000000).toFixed(2) + '</span><span>最低</span><span>' + Number(elements[5]).toFixed(2)
+				+ '</span></li><li><span>成交额(亿元)</span><span>' + Number(elements[9] / 100000000).toFixed(2) + '</span></li></ul>');
+				var newColor = 'black';
+				if (zhangdie < 0)
+					newColor = '#1bc07c';
+				else if (zhangdie > 0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 3; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[2]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[2]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+					if (elements[3] == 0 || parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) == 0)
+						$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color','black');
+				}
+				var prefix163 = '1';
+				var prefixFH = 'sz';
+				var prefixHX = '2';
+				if (code[2] == '0'){
+					prefix163 = '0';
+					prefixFH = 'sh';
+					prefixHX = '1';
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/realstock/company/' + code + '/nc.shtml">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/zs' + code.substr(2, 7) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a> <a target="_blank" href="http://stockhtm.finance.qq.com/hqing/zhishu/' + code.substr(2, 7) + '.htm">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/' + prefix163 + code.substr(2, 7) + '.html">网易财经</a> <a target="_blank" href="http://q.stock.sohu.com/zs/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/stock/' + prefixFH + code.substr(2, 7) + '/">凤凰财经</a> <a target="_blank" href="http://stockdata.stock.hexun.com/indexhq_' + code.substr(2, 7) +'_' + prefixHX + '.shtml">和讯</a>');
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/sh/?code=' + code + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/stock/StockIndex,' + code.substr(2, 7) + '.shtml">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a>');
+			}
+			else if (mode == 'stock'){
+				$('#mainPrice').removeClass().addClass('stockMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = (elements[3] - elements[2]).toFixed(2);
+				var zhangdie100 = (zhangdie / elements[2] * 100).toFixed(2) + '%';
+				if (elements[1] == 0){
+					zhangdie = 0;
+					zhangdie100 = 0;
+				}
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code + ',stock">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><span>' + Number(elements[3]).toFixed(2) + '</span><span>' 
+						+ symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[0] + ',' + elements[3] + ',' + zhangdie100 + ',' + elements[30] + ' ' + elements[31] + '</span><span id="buyDiv"><input id="buyButton" type="button" value="持仓"/><span id="buyContent"></span></span>');
+				$('#info').css('background',color);
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[0] + ' ' + Number(elements[3]).toFixed(2) + ' ' + symbol + zhangdie  + ' ' + symbol + zhangdie100;
+				if(code.length == 6)
+					$('#info').html(elements[0]);
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[30]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[30] + ' ' + elements[31] + ' ' + week +  ' CST</span>');
+				$('#mainPrice').html('');
+				//nownow
+				
+				$('#mainPrice').append('<ul><li></li><li><span>卖五</span><span>' + Number(elements[29]).toFixed(2) + '</span><span>' + Math.floor(elements[28] / 100) + '</span><span></span></li>'
+				+ '<li><span>卖四</span><span>' + Number(elements[27]).toFixed(2) + '</span><span>' + Math.floor(elements[26] / 100) + '</span><span></span></li>'
+				+ '<li><span>卖三</span><span>' + Number(elements[25]).toFixed(2) + '</span><span>' + Math.floor(elements[24] / 100) + '</span><span></span></li>'
+				+ '<li><span>卖二</span><span>' + Number(elements[23]).toFixed(2) + '</span><span>' + Math.floor(elements[22] / 100) + '</span><span></span></li>'
+				+ '<li><span>卖一</span><span>' + Number(elements[21]).toFixed(2) + '</span><span>' + Math.floor(elements[20] / 100) + '</span><span></span></li>'
+				+ '<li><span>最新</span><span>' + Number(elements[3]).toFixed(2) + '</span><span></span><span></span></li>'
+				+ '<li><span>买一</span><span>' + Number(elements[11]).toFixed(2) + '</span><span>' + Math.floor(elements[10] / 100) + '</span><span></span></li>'
+				+ '<li><span>买二</span><span>' + Number(elements[13]).toFixed(2) + '</span><span>' + Math.floor(elements[12] / 100) + '</span><span></span></li>'
+				+ '<li><span>买三</span><span>' + Number(elements[15]).toFixed(2) + '</span><span>' + Math.floor(elements[14] / 100) + '</span><span></span></li>'
+				+ '<li><span>买四</span><span>' + Number(elements[17]).toFixed(2) + '</span><span>' + Math.floor(elements[16] / 100) + '</span><span></span></li>'
+				+ '<li><span>买五</span><span>' + Number(elements[19]).toFixed(2) + '</span><span>' + Math.floor(elements[18] / 100) + '</span><span></span></li>'
+				+ '</ul>');
+				var oldElements = oldInfo.split(',');
+				
+				var newE = new Array(elements[29],elements[27],elements[25],elements[23],elements[21],elements[11],elements[13],elements[15],elements[17],elements[19]);
+				var oldE = new Array(oldElements[29],oldElements[27],oldElements[25],oldElements[23],oldElements[21],oldElements[11],oldElements[13],oldElements[15],oldElements[17],oldElements[19]);
+				var value = new Array(28,26,24,22,20,10,12,14,16,18);
+				for (var i = 0; i < 10; i++)
+					for (var j = 0; j < 10; j++)
+						if ((oldE[j] == newE[i]) && (elements[value[i]] != oldElements[value[j]])){
+							var tmp = i + 1;
+							if (i > 4)
+								tmp++;
+							$('#mainPrice ul:first-child li:eq(' + tmp + ') span:eq(3)').html(Math.floor(elements[value[i]] / 100 - oldElements[value[j]] / 100));
+				}
+				for (var i = 1; i <= 11; ++i){
+					if (i == 6)
+					continue;
+					var num = $('#mainPrice ul:first-child li:eq(' + i + ') span:eq(3)').html();
+					if (num > 0){
+						$('#mainPrice ul:first-child li:eq(' + i + ') span:eq(3)').html('+' + num);
+						$('#mainPrice ul:first-child li:eq(' + i + ') span:eq(3)').css('color','#fd2f3b');
+					}
+					else if (num < 0)
+						$('#mainPrice ul:first-child li:eq(' + i + ') span:eq(3)').css('color','#1bc07c');
+					else
+						$('#mainPrice ul:first-child li:eq(' + i + ') span:eq(3)').css('color','#939393');
+				}
+				setTimeout('clear5Dang()',3000);
+				$('#oldInfo').html(result);
+				$('#mainPrice').append('<ul><li><span>现价</span><span>' + Number(elements[3]).toFixed(2)
+				+ '</span><span>昨收</span><span>' + Number(elements[2]).toFixed(2)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>今开</span><span>' + Number(elements[1]).toFixed(2)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[4]).toFixed(2)
+				+ '</span></li><li><span>总手(万手)</span><span>' +  Number(elements[8] / 1000000).toFixed(2)
+				+ '</span><span>最低</span><span>' + Number(elements[5]).toFixed(2)
+				+ '</span></li><li><span>成交额(亿元)</span><span>' + Number(elements[9] / 100000000).toFixed(2) + '</span></li></ul>');
+				var newColor = 'black';
+				if ((zhangdie < 0) && elements[1] != 0.0)
+					newColor = '#1bc07c';
+				else if ((zhangdie > 0) && elements[1] != 0.0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul:eq(1) li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul:eq(1) li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul:eq(1) li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 11; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').html()) - parseFloat(elements[2]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').html()) - parseFloat(elements[2]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').css('color',color);
+					if (elements[3] == 0 || parseFloat($('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').html()) == 0)
+						$('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').css('color','black');
+				}
+				for (var i = 1; i <= 3; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[2]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[2]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').css('color',color);
+					if (elements[1] == 0)
+						$('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').css('color','black');
+				}
+				var prefix163 = '1';
+				if (code[1] == 'h'){
+					prefix163 = '0';
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/realstock/company/' + code + '/nc.shtml">新浪财经</a> <a  target="_blank" href="http://quote.eastmoney.com/' + code + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a> <a target="_blank" href="http://stockhtm.finance.qq.com/sstock/ggcx/' + code.substr(2, 7) + '.shtml">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/' + prefix163 + code.substr(2, 7) + '.html">网易财经</a> <a target="_blank" href="http://q.stock.sohu.com/cn/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/stock/' + code + '/">凤凰财经</a> <a target="_blank" href="http://stockdata.stock.hexun.com/' + code.substr(2, 7) + '.shtml">和讯</a>');
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/sh/?code=' + code + '">新浪财经</a> <a target="_blank" href="http://m.quote.eastmoney.com/stock,' + code.substr(2, 7) + '.shtml">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a>');
+			}
+			else if (mode == 'fund'){
+				$('#mainPrice').removeClass().addClass('fundMode');
+				document.title = elements[0];
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(2, 7) + ',fund">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[0] + ',' + elements[1] + ',' +  elements[2] + ',' + elements[4] + '</span>');
+				$('#mainPrice').html('<ul><li><span>七日年化收益率(累计净值)</span><span>'
+				+ Number(elements[2]).toFixed(3) + '</span></li><li><span>每万份收益(单位净值)</span><span>' + Number(elements[1]).toFixed(4) + '</span></li><li><span>规模(亿元)</span>' + elements[5] + '</span></li></ul>');
+				$('#info').css('background','white'); 
+				$('#info a').css('color','black'); 
+				$('#info span').css('color','black'); 
+				
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[4]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[4] + ' ' + week +  ' CST</span>');
+				var prefixFH = 'sz';
+				var prefixHX = '2';
+				if (code[2] == '0'){
+					prefixFH = 'sh';
+					prefixHX = '1';
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/fund/quotes/' + code.substr(2, 7) + '/bc.shtml">新浪财经</a> <a target="_blank" href="http://fund.eastmoney.com/' + code.substr(2, 7) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/MF' + code.substr(2, 7) + '">雪球</a> <a target="_blank" href="http://stockhtm.finance.qq.com/fund/djj_jjcx/' + code.substr(2, 7) + '.htm">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/fund/' + code.substr(2, 7) + '.html">网易财经</a> <a target="_blank" href="http://q.fund.sohu.com/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/fund/of' + code.substr(2, 7) + '/">凤凰财经</a> <a target="_blank" href="http://jingzhi.funds.hexun.com/' + code.substr(2, 7) + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/fund/?code=' + code.substr(2, 7) + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/fund/fund,' + code.substr(2, 7) + '.shtml">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/MF' + code.substr(2, 7) + '">雪球</a>');
+			}		
+			else if (mode == 'future'){
+				$('#mainPrice').removeClass().addClass('futureMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = (elements[8] - elements[10]).toFixed(2);
+				var zhangdie100 = (zhangdie / elements[10] * 100).toFixed(2) + '%';
+				if (elements[2] == 0){
+					zhangdie = 0;
+					zhangdie100 = 0;
+				}
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code + ',future">' + elements[0] + ' ' + code + '</a></span><span>' + elements[8] + '</span><span>' + symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[0] + ',' + elements[8] + ',' + zhangdie100 + ',' + elements[17] + '</span>');
+				$('#info').css('background',color); 
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[0] + ' ' + elements[8] + ' ' + symbol + zhangdie + ' ' + symbol + zhangdie100;
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[17]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[17] + ' ' + week +  ' CST</span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>最新价</span><span>' + Number(elements[8])
+				+ '</span><span>昨结算</span><span>' + Number(elements[10])
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>开盘价</span><span>' + Number(elements[2])
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[3])
+				+ '</span></li><li><span>买量</span><span>' + elements[11]
+				+ '</span><span>买价</span><span>' + elements[6]
+				+ '</span></li><li><span>卖量</span><span>' + elements[12]
+				+ '</span><span>卖价</span><span>' + elements[7]
+				+ '</span></li><li><span>成交量</span><span>' + elements[14]
+				+ '</span><span>最低</span><span>' + Number(elements[4])
+				+ '</span></li><li><span>持仓量</span><span>' + elements[13] 
+				+ '</span></li></ul>');
+				var newColor = 'black';
+				if ((zhangdie > 0) && elements[2] != 0.0)
+					newColor = '#fd2f3b';
+				else if ((zhangdie < 0) && elements[2] != 0.0)
+					newColor = '#1bc07c';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 5; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[10]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[10]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/futures/quotes/' + code + '.shtml">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/qihuo/' + code + '.html">东方财富</a> <a target="_blank" href="http://stockhtm.finance.qq.com/money/future/quotpage/f/' + code + '.htm">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/futures/hq/' + code.toLowerCase() + '.html">网易财经</a> <a target="_blank" href="http://quote.futures.hexun.com/' + code + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://dp.sina.cn/dpool/stockv2/future/future_quote.php?code=' + code + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/stock/FuturesIndex,' + code + '.shtml">东方财富</a>');
+			}			
+			else if (mode == 'hkstock'){
+				$('#mainPrice').removeClass().addClass('hkstockMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = Number(elements[7]).toFixed(2);
+				var zhangdie100 = Number(elements[8]).toFixed(2) + '%';
+				if (elements[5] == 0){
+					zhangdie = 0;
+					zhangdie100 = 0;
+				}
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(5, 10) + ',hkstock">' + elements[1] + ' ' + code.substr(5, 10) + '</a></span><span>' + Number(elements[6]).toFixed(2) + '</span><span>' + symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[1] + ',' +  Number(elements[6]).toFixed(2) + ',' + zhangdie100 + ',' + elements[17] + ' ' + elements[18] + '</span>');
+				$('#info').css('background',color);
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[1] + ' ' +  Number(elements[6]).toFixed(2) + ' ' + symbol + zhangdie + ' ' + symbol + zhangdie100;
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[17]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[17] + ' ' + elements[18] + ' ' + week +  ' CST</span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>现价</span><span>' + Number(elements[6]).toFixed(2)
+				+ '</span><span>昨收</span><span>' + Number(elements[3]).toFixed(2)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>今开</span><span>' + Number(elements[2]).toFixed(2)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[4]).toFixed(2)
+				+ '</span></li><li><span>成交量(亿股)</span><span>' + Number(elements[12] / 100000000).toFixed(2)
+				+ '</span><span>最低</span><span>' + Number(elements[5]).toFixed(2)
+				+ '</span></li><li><span>成交额(亿元)</span><span>' + Number(elements[11] / 100000000).toFixed(2) + '</span></li></ul>');
+				var newColor = 'black';
+				if ((elements[7] < 0) && elements[2] != 0)
+					newColor = '#1bc07c';
+				else if ((elements[7]  > 0) && elements[2] != 0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 3; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[3]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[3]) < 0)
+						color = '#1bc07c';
+					else if (elements[2] == 0)
+						color = 'black';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://stock.finance.sina.com.cn/hkstock/quotes/' + code.substr(5, 10) + '.html">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/hk/' + code.substr(5, 10) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code.substr(5, 10) + '">雪球</a> <a target="_blank" href="http://stock.qq.com/hk' + code.substr(5, 10) + '">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/hkstock/' + code.substr(5, 10) + '.html">网易财经</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/hkstock/hk' + code.substr(5, 10) + '/">凤凰财经</a> <a target="_blank" href="http://hkquote.stock.hexun.com/urwh/hkstock/' + code.substr(5, 10) + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://dp.sina.cn/dpool/stock_new/v2/hk_stock.php?code=' + code.substr(5, 10) + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/stock/HKStock,' + code.substr(5, 10) + '.shtml">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code.substr(5, 10) + '">雪球</a>');
+			}
+			else if (mode == 'usstock'){
+				$('#mainPrice').removeClass().addClass('usstockMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = Number(elements[4]).toFixed(2);
+				var zhangdie100 = Number(elements[2]).toFixed(2) + '%';
+				if (elements[5] == 0){
+					zhangdie = 0;
+					zhangdie100 = 0;
+				}
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(4, 10) + ',usstock">' + elements[0] + ' ' + code.substr(4, 10) + '</a></span><span>' + Number(elements[1]).toFixed(2) + '</span><span>' + symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[0] + ',' + Number(elements[1]).toFixed(2) + ',' + zhangdie100 + ',' + elements[3] + '</span>');
+				$('#info').css('background',color);  
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[0] + ' ' +  Number(elements[1]).toFixed(2) + ' ' +symbol + zhangdie + ' ' + symbol + zhangdie100 ;
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[3]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[3] + ' ' + week + ' CST  ' + elements[25] +  '</span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>现价</span><span>' + Number(elements[1]).toFixed(2)
+				+ '</span><span>昨收</span><span>' + Number(elements[26]).toFixed(2)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>今开</span><span>' + Number(elements[5]).toFixed(2)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[6]).toFixed(2)
+				+ '</span></li><li><span>股本(亿)</span><span>' +Number(elements[19] / 100000000).toFixed(2)
+				+ '</span><span>最低</span><span>' + Number(elements[7]).toFixed(2)+ '</span></li><li><span>市值(亿)</span><span>' + Number(elements[12] / 100000000).toFixed(2)
+				+ '</span><span>52周最高</span><span>' + Number(elements[8]).toFixed(2)+ '</span></li><li><span>市盈率</span><span>' + Number(elements[14]).toFixed(2)
+				+ '</span><span>52周最低</span><span>' + Number(elements[9]).toFixed(2)
+				+ '</span></li><li><span>成交量(万股)</span><span>' +  Number(elements[10] / 10000).toFixed(2)
+				+ '</span><span>每股收益</span><span>' + Number(elements[13]).toFixed(2)
+				+ '</span></li><li><span>10日均量(万股)</span><span>' + Number(elements[11] / 10000).toFixed(2)
+				+ '</span><span>贝塔系数</span><span>' + Number(elements[16]).toFixed(2)
+				+ '</span></li></ul>');
+				var newColor = 'black';
+				if ((elements[4] < 0) && elements[5] != 0)
+					newColor = '#1bc07c';
+				else if ((elements[4]  > 0) && elements[5] != 0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 3; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[26]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[26]) < 0)
+						color = '#1bc07c';
+					else if (elements[5] == 0)
+						color = 'black';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://stock.finance.sina.com.cn/usstock/quotes/' + code.substr(4, 10) + '.html">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/us/' + code.substr(4, 10) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code.substr(4, 10) + '">雪球</a> <a target="_blank" href="http://stockhtm.finance.qq.com/astock/ggcx/' + code.substr(4, 10).toUpperCase() + '.OQ.htm">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/usstock/' + code.substr(4, 10).toUpperCase() + '.html">网易财经</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/usstock/' + code.substr(4, 10).toUpperCase() + '.O/index.shtml">凤凰财经</a> <a target="_blank" href="http://stockdata.stock.hexun.com/us/' + code.substr(4, 10) + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/us/?code=' + code.substr(4, 10) + '">新浪财经</a> <a target="_blank" href="http://xueqiu.com/S/' + code.substr(4, 10) + '">雪球</a>');
+			}
+			else if (mode == 'forex'){
+				$('#mainPrice').removeClass().addClass('forexMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = Number(elements[8] - elements[3]).toFixed(4);
+				var zhangdie100 = Number((zhangdie / elements[3]) * 100).toFixed(4) + '%';
+				if (zhangdie  > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie  < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code + ',forex">' + elements[9] + ' ' + code + '</a></span><span>' + Number(elements[8]).toFixed(4) + '</span><span>' + symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[9] + ',' + Number(elements[8]).toFixed(4) + ',' + zhangdie100 + ',' + elements[0] + '</span>');
+				$('#info').css('background',color); 
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[9] + ' ' +  Number(elements[8]).toFixed(4) + ' ' +symbol + zhangdie + ' ' + symbol + zhangdie100 ;
+				$('#time').html('<span>更新日期 ' + elements[0] + '</span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>现价</span><span>' + Number(elements[8]).toFixed(4)
+				+ '</span><span>昨收</span><span>' + Number(elements[3]).toFixed(4)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>今开</span><span>' + Number(elements[5]).toFixed(4)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[6]).toFixed(4)
+				+ '</span></li><li><span>买入</span><span>' + Number(elements[1]).toFixed(4)
+				+ '</span><span>最低</span><span>' + Number(elements[7]).toFixed(4)+ '</span></li><li><span>卖出</span><span>' + Number(elements[2]).toFixed(4)
+				+ '</span><span>振幅</span><span>' + elements[4]
+				+ '</span></li></ul>');
+				var newColor = 'black';
+				if (zhangdie > 0)
+					newColor = '#fd2f3b';
+				else if (zhangdie < 0)
+					newColor = '#1bc07c';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 3; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[3]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[3]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/money/forex/hq/' + code + '.shtml">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/forex/' + code + '.html">东方财富</a> <a target="_blank" href="http://stockapp.finance.qq.com/mstats/#mod=list&id=exchange_base&module=ER&type=BASE">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/forex/hq/' + code + '.html">网易财经</a> <a target="_blank" href="http://app.finance.ifeng.com/hq/forex/list.php?type=basic">凤凰财经</a> <a target="_blank" href="http://quote.forex.hexun.com/' + code + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://dp.sina.cn/dpool/stock_new/v2/wht.php?code=' + code + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/stock/GlobalFuturesIndex,' + code + '.shtml">东方财富</a>');
+			}		
+			else if (mode == 'if'){
+				$('#mainPrice').removeClass().addClass('ifMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = Number(elements[3] - elements[14]).toFixed(1);
+				var zhangdie100 = Number(zhangdie / elements[14] * 100).toFixed(2) + '%';
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(7, 13) + ',if">' + code.substr(7, 13) + ' ' + code.substr(7, 13) + '</a></span><span>' + Number(elements[3]).toFixed(1) + '</span><span>' + symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + code.substr(9, 13) + ',' + Number(elements[3]).toFixed(1) + ',' + zhangdie100 + ',' + elements[37] + elements[37] + '</span>');
+				$('#info').css('background',color);
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = code.substr(7, 13) + ' ' +  Number(elements[3]).toFixed(1) + ' ' +symbol + zhangdie + ' ' + symbol + zhangdie100 ;
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[36]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[36] + ' ' + elements[37] + ' ' + week + ' CST </span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>最新</span><span>' + Number(elements[3]).toFixed(1)
+				+ '</span><span>昨收</span><span>' + Number(elements[13]).toFixed(1)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>昨结</span><span>' + Number(elements[14]).toFixed(1)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>今开</span><span>' + Number(elements[0]).toFixed(1)
+				+ '</span></li><li><span>成交额(亿)</span><span>' +Number(elements[5] / 100000000).toFixed(2)
+				+ '</span><span>最高</span><span>' + Number(elements[1]).toFixed(1)
+				+ '</span></li><li><span>持仓量(手)</span><span>' + elements[6]
+				+ '</span><span>最低</span><span>' + Number(elements[2]).toFixed(1)+ '</span></li></ul>');
+				var newColor = 'black';
+				if (zhangdie < 0)
+					newColor = '#1bc07c';
+				else if (zhangdie  > 0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 2; i <= 4; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[14]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[14]) < 0)
+						color = '#1bc07c';
+					else if (elements[5] == 0)
+						color = 'black';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/futures/quotes/' + code.substr(7, 13) + '.shtml">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/gzqh/' + code.substr(7, 13) + '.html">东方财富</a> <a target="_blank" href="http://stockhtm.finance.qq.com/if/ggcx/' + code.substr(7, 13) + '.shtml">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/futures/hq/' + code.substr(7, 13) + '.html">网易财经</a> <a target="_blank" href="http://quote.futures.hexun.com/' + code.substr(7, 13) + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://dp.sina.cn/dpool/stock_new/v2/qz_stockquery.php?code=' + code.substr(7, 13) + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/stock/FuturesIndex,' + code.substr(7, 13) + '.shtml">东方财富</a>');
+			}
+			else if (mode == 'tf'){
+				$('#mainPrice').removeClass().addClass('tfMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = Number(elements[3] - elements[14]).toFixed(3);
+				var zhangdie100 = Number(zhangdie / elements[14] * 100).toFixed(2) + '%';
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(7, 13) + ',tf">' + code.substr(7, 13) + ' ' + code.substr(7, 13) + '</a></span><span>' + Number(elements[3]).toFixed(3) + '</span><span>' + symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + code.substr(7, 13) + ',' + Number(elements[3]).toFixed(3) + ',' + zhangdie100 + ',' + elements[37] + elements[37] + '</span>');
+				$('#info').css('background',color);
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = code.substr(7, 13) + ' ' +  Number(elements[3]).toFixed(3) + ' ' +symbol + zhangdie + ' ' + symbol + zhangdie100 ;
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[36]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[36] + ' ' + elements[37] + ' ' + week + ' CST </span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li><span>最新</span><span>' + Number(elements[3]).toFixed(3)
+				+ '</span><span>昨收</span><span>' + Number(elements[13]).toFixed(3)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>昨结</span><span>' + Number(elements[14]).toFixed(3)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>今开</span><span>' + Number(elements[0]).toFixed(3)
+				+ '</span></li><li><span>最高</span><span>' + Number(elements[3]).toFixed(3)
+				+ '</span><span>持仓量(手)</span><span>' + elements[6]
+				+ '</span></li><li><span>最低</span><span>' + Number(elements[2]).toFixed(3)
+				+ '</span></li></ul>');
+				var newColor = 'black';
+				if (zhangdie < 0)
+					newColor = '#1bc07c';
+				else if (zhangdie  > 0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 2; i <= 4; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[14]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[14]) < 0)
+						color = '#1bc07c';
+					else if (elements[5] == 0)
+						color = 'black';
+					$('#mainPrice ul li:eq(' + i +') span:eq(3)').css('color',color);
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/futures/quotes/' + code.substr(7, 13) + '.shtml">新浪财经</a> <a target="_blank" href="http://quote.eastmoney.com/gzqh/' + code.substr(7, 13) + '.html">东方财富</a> <a target="_blank" href="http://stockhtm.finance.qq.com/if/ggcx/' + code.substr(7, 13) + '.shtml">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/futures/hq/' + code.substr(7, 13) + '.html">网易财经</a> <a target="_blank" href="http://quote.futures.hexun.com/' + code.substr(7, 13) + '.shtml">和讯</a>');		
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://dp.sina.cn/dpool/stock_new/v2/qz_stockquery.php?code=' + code.substr(7, 13) + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/stock/FuturesIndex,' + code.substr(7, 13) + '.shtml">东方财富</a>');
+			}
+			else if (mode == 'bond'){
+				$('#mainPrice').removeClass().addClass('stockMode');
+				var color = 'white';
+				var symbol = '';
+				var zhangdie = (elements[3] - elements[2]).toFixed(2);
+				var zhangdie100 = (zhangdie / elements[2] * 100).toFixed(2) + '%';
+				if (elements[1] == 0){
+					zhangdie = 0;
+					zhangdie100 = 0;
+				}
+				if (zhangdie > 0){
+					color = '#fd2f3b';
+					symbol = '+';
+				}
+				else if (zhangdie < 0){
+					color = '#1bc07c';
+				}
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code + ',bond">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><span>' + Number(elements[3]).toFixed(2) + '</span><span>' 
+						+ symbol + zhangdie + ' ' + symbol + zhangdie100 + '</span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
+				+ code + ',' + mode + ',' + elements[0] + ',' + elements[3] + ',' + zhangdie100 + ',' + elements[30] + ' ' + elements[31] + '</span>');
+				$('#info').css('background',color);
+				setTimeout('setBackgroundColor("' + color + '")',1000);
+				
+				document.title = elements[0] + ' ' + Number(elements[3]).toFixed(2) + ' ' + symbol + zhangdie  + ' ' + symbol + zhangdie100;
+				if(code.length == 6)
+					$('#info').html(elements[0]);
+				var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+				var week = weekArray[new Date(elements[30]).getDay()];	
+				$('#time').html('<span>更新日期 ' + elements[30] + ' ' + elements[31] + ' ' + week +  ' CST</span>');
+				$('#mainPrice').html('');
+				$('#mainPrice').append('<ul><li></li><li><span>卖五</span><span>' + Number(elements[29]).toFixed(2) + '</span><span>' + elements[28] / 10 + '</span></li>'
+				+ '<li><span>卖四</span><span>' + Number(elements[27]).toFixed(2) + '</span><span>' + elements[26] / 10 + '</span></li>'
+				+ '<li><span>卖三</span><span>' + Number(elements[25]).toFixed(2) + '</span><span>' + elements[24] / 10 + '</span></li>'
+				+ '<li><span>卖二</span><span>' + Number(elements[23]).toFixed(2) + '</span><span>' + elements[22] / 10 + '</span></li>'
+				+ '<li><span>卖一</span><span>' + Number(elements[21]).toFixed(2) + '</span><span>' + elements[20] / 10 + '</span></li>'
+				+ '<li><span>最新</span><span>' + Number(elements[3]).toFixed(2) + '</span><span></span></li>'
+				+ '<li><span>买一</span><span>' + Number(elements[11]).toFixed(2) + '</span><span>' + elements[10] / 10 + '</span></li>'
+				+ '<li><span>买二</span><span>' + Number(elements[13]).toFixed(2) + '</span><span>' + elements[12] / 10 + '</span></li>'
+				+ '<li><span>买三</span><span>' + Number(elements[15]).toFixed(2) + '</span><span>' + elements[14] / 10 + '</span></li>'
+				+ '<li><span>买四</span><span>' + Number(elements[17]).toFixed(2) + '</span><span>' + elements[16] / 10 + '</span></li>'
+				+ '<li><span>买五</span><span>' + Number(elements[19]).toFixed(2) + '</span><span>' + elements[18] / 10 + '</span></li>'
+				+ '</ul>');
+				$('#mainPrice').append('<ul><li><span>现价</span><span>' + Number(elements[3]).toFixed(2)
+				+ '</span><span>昨收</span><span>' + Number(elements[2]).toFixed(2)
+				+ '<li><span>涨跌</span><span>' + zhangdie
+				+ '</span><span>今开</span><span>' + Number(elements[1]).toFixed(2)
+				+ '</span></li><li><span>涨幅</span><span>' + zhangdie100
+				+ '</span><span>最高</span><span>' + Number(elements[4]).toFixed(2)
+				+ '</span></li><li><span>成交量(万手)</span><span>' +  Number(elements[8] / 100000).toFixed(2)
+				+ '</span><span>最低</span><span>' + Number(elements[5]).toFixed(2)
+				+ '</span></li><li><span>成交额(亿元)</span><span>' + Number(elements[9] / 100000000).toFixed(2) + '</span></li></ul>');
+				var newColor = 'black';
+				if ((zhangdie < 0) && elements[1] != 0.0)
+					newColor = '#1bc07c';
+				else if ((zhangdie > 0) && elements[1] != 0.0)
+					newColor = '#fd2f3b';
+				$('#mainPrice ul:eq(1) li:eq(0) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul:eq(1) li:eq(1) span:eq(1)').css('color',newColor);
+				$('#mainPrice ul:eq(1) li:eq(2) span:eq(1)').css('color',newColor);
+				for (var i = 1; i <= 11; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').html()) - parseFloat(elements[2]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').html()) - parseFloat(elements[2]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').css('color',color);
+					if (elements[3] == 0 || parseFloat($('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').html()) == 0)
+						$('#mainPrice ul:eq(0) li:eq(' + i +') span:eq(1)').css('color','black');
+				}
+				for (var i = 1; i <= 3; ++i){
+					var color = 'black';
+					if (parseFloat($('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[2]) > 0)
+						color = '#fd2f3b';
+					else if (parseFloat($('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').html()) - parseFloat(elements[2]) < 0)
+						color = '#1bc07c';
+					$('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').css('color',color);
+					if (elements[1] == 0)
+						$('#mainPrice ul:eq(1) li:eq(' + i +') span:eq(3)').css('color','black');
+				}
+				var prefix163 = '1';
+				if (code[1] == 'h'){
+					prefix163 = '0';
+				}
+				if (getDevice() == 'win'){
+					$('#moreInfo').html('<a target="_blank" href="http://money.finance.sina.com.cn/bond/quotes/' + code + '.html">新浪财经</a> <a  target="_blank" href="http://quote.eastmoney.com/' + code + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a> <a target="_blank" href="http://q.stock.sohu.com/cn/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/bond/' + code + '/">凤凰财经</a> <a target="_blank" href="http://bond.money.hexun.com/convertible_bond/' + code.substr(2, 7) + '.shtml">和讯</a>');
+				}
+				else
+					$('#moreInfo').html('<a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a>');
+			}
+			var storage = window.localStorage;
+			for (var i = 0; i < storage.length; i++){
+				if ($('#addButton').attr('class') == storage.key(i)){
+					$('#addButton').hide();
+					break;
+				}
+			}
+			var url = getCurrentCodeUrl();
+			var tmp = $('#time').html();
+			tmp = '<a href="' + url + '">' + tmp + '</a>';
+			$('#time').html(tmp);
+		}
+		function getPrefix(value, mode){
+		//add new type
+		//判断前缀
+			var returnValue = '';
+				if (mode == 'stock' && !isNaN(value) && ((value.indexOf("2") == 0) || (value.indexOf("1") == 0) ||  (value.indexOf("0") == 0) || (value.indexOf("3") == 0)) && value.length == 6)
+					returnValue = 'sz';
+				else if (mode == 'stock' && !isNaN(value) && (value.indexOf("6") == 0 || value.indexOf("5") == 0) && value.length == 6)
+					returnValue = 'sh';
+				else if (mode == 'bond' && value.length == 6)
+					returnValue='sh';
+				else if (mode == 'fund')
+					returnValue='f_';
+				else if (mode == 'future')
+					returnValue='';
+				else if (mode == 'usstock')
+					returnValue='usr_';
+				else if (mode == 'hkstock')
+					returnValue='rt_hk';
+				else if (mode == 'forex')
+					returnValue='';
+				else if (mode == 'if' || mode == 'tf')
+					returnValue='CFF_RE_';
+				else if (mode == 'zs' && value.indexOf("3") == 0)
+					returnValue='sz';
+				else if (mode = 'zs' && value.indexOf("0") == 0)
+					returnValue='sh';
+			return returnValue;
+		}
+		function getWeather(){
+		$.ajax({
+			dataType:'script',
+			url:'http://php.weather.sina.com.cn/js.php?city=' + remote_ip_info.city + '&password=DJOYnieT8234jlsK&day=0',
+			cache: true,
+			async: false,
+			success:function(){
+				$('#weather').html(city + ' ' + status1 + ' ' + temperature1 + '°');
+            }
+		});
+		}
+		function getDevice() {  
+                var sUserAgent = navigator.userAgent.toLowerCase();  
+                var bIsIpad = sUserAgent.match(/ipad/i) == "ipad";  
+                var bIsIphoneOs = sUserAgent.match(/iphone os/i) == "iphone os";  
+                var bIsMidp = sUserAgent.match(/midp/i) == "midp";  
+                var bIsUc7 = sUserAgent.match(/rv:1.2.3.4/i) == "rv:1.2.3.4";  
+                var bIsUc = sUserAgent.match(/ucweb/i) == "ucweb";  
+                var bIsAndroid = sUserAgent.match(/android/i) == "android";  
+                var bIsCE = sUserAgent.match(/windows ce/i) == "windows ce";  
+                var bIsWM = sUserAgent.match(/windows mobile/i) == "windows mobile";  
+                if (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM){  
+                    return 'mobile';
+                } 
+				else{
+					return 'win';
+				}
+        }
+		function startSearchInterval(code,mode){
+			clearTimeout(interval01);
+			clearTimeout(interval02);
+			var prefix = getPrefix(code,mode);
+			baseSearch(prefix + code, mode);
+			
+			$('#price').siblings().hide();
+			$('#price').show();
+			$('#navPrice').removeClass().addClass('current');
+			addArrow($('#navPrice'));
+			$('#picDaily').html('<img src=""/>');
+			$('#picMin').html('<img src=""/>');
+			if (mode != 'fund' && $('#settingAutoUpdate').is(':checked'))
+				interval01 = setInterval(function(){
+					baseSearch(prefix + code, mode);
+				}, $('#settingInterval').val() * 1000);
+		}
+		function getReady(url){
+		//读取网址参数html?content=600036
+		//默认为stock
+		//基金的话,html?content=000198,fund
+			var code = url.substring(url.lastIndexOf('=') + 1);
+			var para = url.substring(0, url.lastIndexOf('='));
+			var importMsg = '';
+			para = para.split('?');
+			if (code[code.length - 1] == '#')
+				code = code.substr(0, code.length - 1);
+			importMsg = code;
+			code = code.split(',');
+			if (code.length > 1){
+				mode = code[1];
+				$('#selector').val(mode);
+			}
+			else{
+				mode = 'stock';
+			}
+			if (url != code && (para[1] == 'content')){
+				startSearchInterval(code[0], mode);
+			}
+			else if (url != code && (para[1] == 'import')){
+				importMyStock(importMsg);
+				$('#navMy').click();
+			}
+			else if (url != code && (para[1] == 'id')){
+				getFromDB(importMsg);
+			}
+		}
+		function getIncompleteContent(){
+			//$('html,body').animate({scrollTop:$('#navLayout').offset().top}, 500);
+			var code = $.trim($('#content').val());
+			var mode = $('#selector').val();
+			var url = getMainUrl();
+			url = url + '?content=' + code + ',' + mode;
+			getReady(url);
+		}
+		function getFromMyStock(code,mode){
+			$('#content').val(code);
+			$('#selector').val(mode);
+			var url = getMainUrl();
+			url = url + '?content=' + code + ',' + mode;
+			getReady(url);
+		}
+		function mytrim(s){
+			if(s.length>0){
+				while (s.charAt(0) == ',' || s.charAt(s.length - 1) == ','){
+				if (s.charAt(0) == ',')
+					s = s.substring(1,s.length);
+				if (s.charAt(s.length - 1) == ',')
+					s = s.substring(0,s.length-1);
+				}
+			}
+			return s;
+		}
+		function setCurrentTime(){
+			var myDate = new Date();
+			var weekArray = new Array("星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六");
+			var week = weekArray[myDate.getDay()];
+			$('#time').html('<span>更新时间 ' + myDate.toLocaleDateString() + ' ' + myDate.toLocaleTimeString() + ' ' + week + ' CST  ' +  '</span>');
+		}
+		function updateMyStock(){
+			clearTimeout(interval01);
+			clearTimeout(interval02);
+			document.title = '单页面投资行情';
+			setCurrentTime();
+				
+			var storage = window.localStorage;
+			var code = '';
+			var mode = '';
+			var tmp = '';
+			for (var i = 0; i < storage.length; i++){
+				var value = storage.key(i);
+				if (value.indexOf("setting") == 0 || value.indexOf("buy") == 0)
+					continue;
+				tmp = storage.getItem(storage.key(i));
+				tmp = tmp.split(',');
+				code = code + tmp[0] + ',';
+				mode = mode + tmp[1] + ',';
+			}
+			code = code.substr(0, code.length - 1);
+			mode = mode.substr(0, mode.length - 1);
+			var s = ',,1f242f1,';
+			code = mytrim(code);
+			mode = mytrim(mode);
+			//code，mode为数组
+			listSearch(code, mode);
+			if ($('#settingAutoUpdate').is(':checked'))
+			interval02 = setInterval(function(){
+				listSearch(code, mode);
+			}, $('#settingInterval').val() * 1000);
+		}
+		
+		function picktype(type){
+		var storage = window.localStorage;
+		var newStorage = '';
+		for(var i = 0; i < storage.length; i++){
+				var elements = storage.getItem(storage.key(i)).split(',');
+				var value = storage.key(i);
+				if (value.indexOf("setting") != 0 && value.indexOf("buy") != 0 && elements[1] == type)
+					newStorage += storage.getItem(storage.key(i)) + ';';
+		}
+		return newStorage;
+		}
+		
+		function paixu(){
+		//add new type
+		var storage = window.localStorage;
+		var type = new Array('zs','stock','fund','future','hkstock','usstock','forex','if','tf','bond');
+		var newStorage = '';
+		for (x in type)
+		newStorage += picktype(type[x]);
+		return newStorage;
+		}
+		
+		function loadMyStockData(){
+		var newStorage = paixu();
+		var elementss = newStorage.split(';');
+		var storage = window.localStorage;
+		$('#myBuy').html('<li><span>持仓</span><span>数量</span><span>买价</span><span>现价</span><span>盈亏</span><span id="clearMyBuy">清空</span></li>');
+		for(var i = 0; i < storage.length ; i++){
+			if (storage.key(i).indexOf("buy") == 0){
+				var elements = storage.getItem(storage.key(i)).split(',');
+				var yongjin = (elements[3] *  elements[4] *  elements[5]/10000);
+				if (yongjin < 5)
+					yongjin = 5;
+				var xianjia = storage.getItem(elements[0]).split(',')[3];
+				if (xianjia == 0.0)
+					xianjia = storage.getItem(elements[0]).split(',')[6];
+				var zhangdie = parseFloat(((xianjia - elements[4]) * elements[3] - yongjin) / (elements[4] * elements[3]) * 100).toFixed(2) + '%';
+				$('#myBuy').append('<li><span class="' + elements[0] + ',' + elements[1] + '"><p>' + storage.getItem(elements[0]).split(',')[2] + '</p><p>' + storage.getItem(elements[0]).split(',')[5] + '</p></span><span>' + elements[3] + '</span><span>' + parseFloat(elements[4]).toFixed(2) + '</span><span>' + xianjia +'</span><span><p>' + ((xianjia - elements[4]) * elements[3] - yongjin).toFixed(2) + '</p><p>' + zhangdie + '</p></span><span class="' + elements[0] +'">删除</span></li>');
+			}
+		}
+		if ($('#myBuy li').length > 1){
+		var totalearn = 0.0;
+		var totalmoney = 0.0;
+		var totaloldmoney = 0.0;
+		var oldprice = 0;
+		var newprice = 0;
+		var amount = 0;
+		var code = '';
+		for(var i = 1; i < $('#myBuy li').size(); i++){
+			totalearn += parseFloat($('#myBuy li:eq(' + i + ') span:eq(4) p:first-child').html());
+			oldprice = $('#myBuy li:eq(' + i + ') span:eq(2)').html();
+			newprice = $('#myBuy li:eq(' + i + ') span:eq(3)').html();
+			//xx
+			//console.log('old='+oldprice+' '+'new='+newprice);
+			amount = $('#myBuy li:eq(' + i + ') span:eq(1)').html();
+			code = $('#myBuy li:eq(' + i + ') span:eq(0)').attr('class').split(',')[0];
+			totaloldmoney += oldprice*amount;
+			totalmoney += newprice * amount;
+		}
+		var storage = window.localStorage;
+		$('#myBuy').append('<li><span>总资产</span><span>' + parseFloat(totalmoney).toFixed(2) + '</span><span></span><span>总盈亏</span><span><p>' + parseFloat(totalearn).toFixed(2) + '</p><p>' + parseFloat(totalearn / totaloldmoney * 100).toFixed(2) +'%</p></span><span></span></li>');
+		}
+		for(var i = 1; i < $('#myBuy li').size(); i++){
+				var symbol = $('#myBuy li:eq(' + i + ') span:eq(4) p:first-child').html();
+				var color = '#939393';
+				if (symbol[0] == '-')
+					color = '#1bc07c';
+				else
+					color = '#fd2f3b';
+				$('#myBuy li:eq(' + i + ') span:eq(4)').css('background', color);
+				$('#myBuy li:eq(' + i + ') span:eq(4) p').css('color', 'white');
+			}
+		$('#myStockTable').html('<li><span>名称</span><span>类型</span><span>最新</span><span>涨跌</span><span id="clearMyStock">清空</span></li>');
+			if(!window.localStorage)
+				$('#myStockTable').append('<li>您的设备不支持本地存储自选股</li>');
+			for(var i = 0; i < elementss.length - 1; i++){
+				var elements = elementss[i].split(',');
+				$('#myStockTable').append('<li><span class="' + elements[0] + ',' + elements[1] + '"><p>' + elements[2] + '</p><p>' + elements[5] + '</p></span><span>' + getSelector(elements[1]) + '</span><span>' + elements[3] +'</span><span>' + elements[4] + '</span><span class="' + elements[0] +'">删除</span></li>');
+			}
+			//上色
+			for(var i = 1; i < $('#myStockTable li').size(); i++){
+				var symbol = $('#myStockTable li:eq(' + i + ') span:eq(3)').html();
+				var color = '#939393';
+				var mode = $('#myStockTable li:eq(' + i + ') span:eq(1)').html();
+				if (symbol[0] == '-')
+					color = '#1bc07c';
+				else if ((symbol != '0.00%') && (mode != '基金'))
+					color = '#fd2f3b';
+				$('#myStockTable li:eq(' + i + ') span:eq(3)').css('background', color);
+				$('#myStockTable li:eq(' + i + ') span:eq(3)').css('color', 'white');
+			}
+			if ($('#settingHideTotalMoney').is(':checked'))
+				hidetotalmoney();
+		}
+		function loadSetting(){
+			var storage = window.localStorage;
+			var value = storage.getItem('settingInterval');
+			if (value)
+				$('#settingInterval').val(value);
+			value = storage.getItem('settingAutoUpdate');
+			if (value == 'true')
+				$('#settingAutoUpdate').attr('checked',true);
+			else
+				$('#settingAutoUpdate').attr('checked',false);
+			value = storage.getItem('settingHideTotalMoney');
+			if (value == 'true')
+				$('#settingHideTotalMoney').attr('checked',true);
+			else
+				$('#settingHideTotalMoney').attr('checked',false);
+		}
+	
+		function importMyStock(info){
+			if (info.length < 1)
+				return;
+			var every = info.split(';');
+			if ((every.length == 1) && (!isNaN(every[0][0]))){
+				getFromDB(info);
+				return;
+			}
+			for (var i = 0; i < every.length; i++){
+				var tmp = every[i].split(',');
+				if (tmp[0].indexOf("buy") == 0)
+					localStorage.setItem(tmp[0], tmp[0].substr(3,tmp[0].length - 1) + ',' + tmp[1] + ',,' + tmp[2] + ',' + tmp[3] + ',' + tmp[4]);
+				else
+					localStorage.setItem(tmp[0], tmp[0] + ',' + tmp[1] + ',未更新,未更新,未更新,未更新');
+			}
+		}	
+		
+		function getMainUrl(){
+			var url = window.location.href;
+			url = url.substr(0, url.lastIndexOf('/') + 1) + 'index.html';
+			return url;
+		}
+		function getCurrentCodeUrl(){
+			var value = $('#addInfo').html();
+			var url = getMainUrl();
+			value = value.split(',');
+			value = reCodedcode(value);
+			url = url + '?content=' + value[0] + ',' + value[1];
+			return url;
+		}
+		function reCodedcode(value){
+		//add new type
+			if (value[1] == 'fund')
+				value[0] = value[0].substr(2,10);
+			if (value[1] == 'usstock')
+				value[0] = value[0].substr(4,10);
+			if (value[1] == 'hkstock')
+				value[0] = value[0].substr(5,10);
+			if (value[1] == 'if')
+				value[0] = value[0].substr(7,13);
+			if (value[1] == 'tf')
+				value[0] = value[0].substr(7,13);
+			return value;
+		}
+		function addArrow(obj){
+		//添加小箭头
+			var r = obj.html();
+			var arrow = '<em class="arrow"></em>';
+			obj.css('background','#60798d');
+			obj.attr('class','current');
+			obj.siblings().css('background','#6f889c').removeClass();
+			$('em').remove();
+			obj.html(r + arrow);
+		}
+		
+		function hidetotalmoney(){
+		$("#myBuy li").each(function(){
+			$(this).find("span").eq(1).hide();
+        })
+		$("#myBuy li:last-child span:eq(0)").html('');
+		$("#myBuy li:last-child span:eq(1)").html('');
+		$("#myBuy li:last-child span:eq(1)").css('background-color','#eee');
+		}
+		
+		function getShortUrl(myurl){
+		$.ajax({
+			async:false,
+            type: "get",
+            url: "http://api.t.sina.com.cn/short_url/shorten.json?source=166551182&url_long=" + myurl,
+            dataType: "jsonp",
+            jsonp: "callback",
+            jsonpCallback:"handler",
+            success: function(json){
+				var newurl = json[0].url_short;	
+				$('#eximportInfo span:eq(1)').html('<br/>或复制以下网址<br/><span><a href="' + myurl + '">' + myurl + '</a></span><br/><span><a href="' + newurl + '">' + newurl + '</a></span><div id="qrcode"></div>');
+				jQuery('#qrcode').qrcode(newurl);
+            },
+            error: function(){
+                console.log('error' + json[0].error);	
+            }
+        });
+		}
+		
+		function getFromDB(myid){
+		$.post("getData.php", {data: myid, type: 1},
+			function (data){
+				$('#eximportInput').val(data.data);
+				$('#importButton').click();
+			}, "json");
+		}
+		$(document).on('click', '#addButton', function(){
+			if(!window.localStorage){
+					$('#mystock ul').append('<li>您的设备不支持本地存储自选股</li>');
+					return;
+				}
+				var info = $('#addInfo').html();
+				var storage = window.localStorage;
+				var tmp = info.split(',');
+				localStorage.setItem(tmp[0],info);
+				$('#addButton').attr('value','完成');	
+		});	
+		$(document).on('click', '#buyButton', function(){
+			$('#buyContent').html('<ul><li><span>价格(元)</span><span><input id="buyPrice" type="text" autocomplete="off"/></span></li><li><span>持仓数量(股)</span><span><input id="buyAmount" type="text" autocomplete="off"/></span></li><li><span>费率(万分之)</span><span><input id="buyFee" type="text" autocomplete="off"/></span></li><li><input class="button" id="buyConfirm" type="button" value="确认"/><input class="button" id="buyConcel" type="button" value="取消"/></li></ul>');
+			$('#buyPrice').val($('#addInfo').html().split(',')[3]);
+			$('#buyAmount').val('00');
+			$('#buyContent span').css('color','black');
+			console.log($('#buyContent span').css('color'));
+		});	
+		$(document).on('click', '#buyConfirm', function(){
+			$('#addButton').click();
+			if ($('#buyAmount').val() != '' && $('#buyPrice').val() != '' && $('#buyFee').val() != ''){
+			var info = $('#addInfo').html();
+			var code = info.split(',')[0];
+			var value = code.split(',')[0] + ',' + info.split(',')[1] + ',' + info.split(',')[2] + ',' +$('#buyAmount').val() + ',' + $('#buyPrice').val() + ',' + $('#buyFee').val();
+			var storage = window.localStorage;
+			storage.setItem('buy' + code.split(',')[0],value);
+			$('#buyContent').html('');
+			}
+		});	
+		$(document).on('click', '#buyConcel', function(){
+			$('#buyContent').html('');
+		});	
+		
+		$(document).on('click', '#clearMyStock', function(){
+			window.localStorage.clear();
+			loadMyStockData();
+		});
+
+		$(document).on('click', '#clearMyBuy', function(){
+			var storage = window.localStorage;
+			for (var i = 0; i < storage.length; i++){
+				if (storage.key(i).indexOf("buy") == 0){
+					storage.removeItem(storage.key(i));
+					i--;
+				}
+			}
+			loadMyStockData();
+		});		
+		$(document).on('click','#myStockTable li',function(){
+			var code = $(this).find('span:first-child').attr('class');
+			code = code.split(',');
+			code = reCodedcode(code);
+			getFromMyStock(code[0], code[1]);
+			//getIncompleteContent();
+		});
+		$(document).on('click','#myStockTable li span:last-child',function(){
+			var key = $(this).attr('class');
+			var storage = window.localStorage;
+			storage.removeItem(key);
+			storage.removeItem('buy' + key);
+			loadMyStockData();
+			updateMyStock();
+			return false;
+		});	
+		
+		$(document).on('click','#myBuy li',function(){
+			var code = $(this).find('span:first-child').attr('class');
+			code = code.split(',');
+			code = reCodedcode(code);
+			getFromMyStock(code[0], code[1]);
+			//getIncompleteContent();
+		});
+		$(document).on('click','#myBuy li span:last-child',function(){
+			var key = 'buy' + $(this).attr('class');
+			var storage = window.localStorage;
+			storage.removeItem(key);
+			loadMyStockData();
+			updateMyStock();
+			return false;
+		});	
+		$(document).ready(function(){
+		$('#navDaily').click(function(){
+			$('#picDaily').siblings().hide();
+			$('#picDaily').show();
+			writeToDaily();
+		});
+		$('#navMin').click(function(){
+			$('#picMin').siblings().hide();
+			$('#picMin').show();
+			writeToMin();
+		});
+		$('#navPrice').click(function(){
+			var idName = $('.current').attr('id');
+			var info = $('#addInfo').html();
+			if (info){
+				info = info.split(',');
+				info = reCodedcode(info);
+				getFromMyStock(info[0], info[1]);
+				$('#navMy').removeClass();
+				$('#navPrice').addClass('current');
+			}
+			$('#price').siblings().hide();
+			$('#price').show();
+		});
+		$('#navMy').click(function(){
+			$('#myStock').siblings().hide();
+			$('#myStock').show();
+			loadMyStockData();
+			updateMyStock();
+		});
+		$('#navBuy').click(function(){
+			$('#myBuy').siblings().hide();
+			$('#myBuy').show();
+			loadMyStockData();
+			updateMyStock();
+		});
+		$('#navSetting').click(function(){
+			$('#setting').siblings().hide();
+			$('#setting').show();
+			setCurrentTime();
+		});
+		$('#exportButton').click(function(){
+			var storage = window.localStorage;
+			var exportMsg = '';
+			for (var i = 0; i < storage.length; ++i){
+				if (storage.key(i).indexOf("setting") == 0)
+					continue;
+				var tmp = storage.getItem(storage.key(i));
+				tmp = tmp.split(',');
+				if (storage.key(i).indexOf("buy") == 0)
+				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ',' + tmp[3] + ',' + tmp[4] + ',' + tmp[5] +';';
+				else
+				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ';';
+			}
+			exportMsg = exportMsg.substr(0, exportMsg.length - 1);
+			var url = getMainUrl() + '?import=' + exportMsg;
+			$('#eximportInput').val(exportMsg);	
+			$('#exportURL').html('<a href="'+url+'">'+url+'</a>');	
+			getShortUrl(url);
+		});
+		$('#exportButton2').click(function(){
+			var storage = window.localStorage;
+			var exportMsg = '';
+			for (var i = 0; i < storage.length; ++i){
+				if ((storage.key(i).indexOf("setting") == 0) || ( storage.key(i).indexOf("buy") == 0))
+					continue;
+				var tmp = storage.getItem(storage.key(i));
+				tmp = tmp.split(',');
+				if (storage.key(i).indexOf("buy") == 0)
+				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ',' + tmp[3] + ',' + tmp[4] + ',' + tmp[5] +';';
+				else
+				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ';';
+			}
+			exportMsg = exportMsg.substr(0, exportMsg.length - 1);
+			var url = getMainUrl() + '?import=' + exportMsg;
+			$('#eximportInput').val(exportMsg);
+			getShortUrl(url);
+		});
+		$('#importButton').click(function(){
+			var info = $.trim($('#eximportInput').val());
+			importMyStock(info);
+			$('#navMy').click();
+		});
+		$('#dbButton').click(function(){
+			var value = $('#eximportInput').val();
+			if ($('#settingInterval').val() == 331){
+				$.post("getData.php", {data: value,type: 3},
+				function (data){
+					$('#eximportInput').val(data.data);
+				}, "json");
+			}else if ($('#settingInterval').val() == 332){
+				$.post("getData.php", {type: 4},     
+				function (data){
+					$('#eximportInput').val(data.data);
+				}, "json");
+			}else{
+				$.post("getData.php", {data: value,type: 2},     
+				function (data){
+					getShortUrl(getMainUrl()  + '?id=' + data.data);
+				}, "json");
+			}
+		});
+		/*
+		$('#navPrice').mouseenter(function(){
+			var x = $(this).offset().left;
+			var y = $(this).offset().top + 32;
+			selector = $('#selector').val();
+			if (selector == 'usstock'){
+					$('#showMsg').html('美股交易时间<br/>夏令 21:30-04:00(北京时间)<br/>冬令 2:30-05:00(北京时间)<br/>夏令/冬令 09:30-16:00(美国东部时间)<br/>周一到周五开市(美国东部时间) 法定节假日休市 ');
+					$('#showMsg').show();
+			}else if (selector == 'stock'){
+					$('#showMsg').html('沪深A股交易时间(北京时间)<br/>09:15-11:30<br/>13:00-15:00<br/>周一到周五开市 法定节假日休市');
+					$('#showMsg').show();
+			}else if (selector == 'future'){
+					$('#showMsg').html('期货交易时间(北京时间)<br/>上海期货交易所:<br/>08:55-10:15<br/>10:30-11:30<br/>13:30-14:10<br/>14:20-15:00<br/>大连、郑州商品交易所:<br/>08:55-10:15<br/>10:30-11:30<br/>13:30-15:00<br/>中国金融期货交易所:<br/>平时交易时间:<br/>09:15-11:30<br/>13:00-15:15<br/>交割日交易时间:<br/>9:15-11:30<br/>13:00-15:00<br/>周一到周五开市 法定节假日休市');
+					$('#showMsg').show();
+			}else if (selector == 'fund'){
+					$('#showMsg').html('基金交易时间(北京时间)<br/>09:30-15:00<br/>周一到周五开市 法定节假日休市');
+					$('#showMsg').show();
+			}else if (selector == 'hkstock'){
+					$('#showMsg').html('港股交易时间(北京时间)<br/>9:30-12:00<br/>13:00-16:00<br/>周一到周五开市 法定节假日休市');
+					$('#showMsg').show();
+			}
+			$('#showMsg').css('left',x);
+			$('#showMsg').css('top',y);
+		});
+		*/
+		$('#navPrice').mouseout(function(){
+			$('#showMsg').hide();
+		});
+		$('#contactme span:last-child').mouseenter(function(){
+			$('#help').show();
+			$('#help').css('left',8);
+			$('#help').css('top',149);
+		});
+		$('#contactme span:last-child').mouseout(function(){
+			$('#help').hide();
+		});
+		$('#navLayout a').click(function(){
+			addArrow($(this));
+		});
+		$('#content').keydown(function(event){
+			if (event.keyCode == 32){
+				$('#searchButton').click();
+			}
+		});
+		$('#searchButton').click(function(){
+			//$('body').animate({scrollTop:'-42px'}, 500);
+			getIncompleteContent();
+		});
+		$('#settingInterval').blur(function(){
+			var settingInterval = $('#settingInterval').val();
+			var storage = window.localStorage;
+			storage.setItem('settingInterval', settingInterval);
+		});
+		$('#settingAutoUpdate').click(function(){
+			var settingAutoUpdate = $(this).is(':checked');
+			var storage = window.localStorage;
+			storage.setItem('settingAutoUpdate', $(this).is(':checked'));
+		});
+		$('#settingHideTotalMoney').click(function(){
+			var settingHideTotalMoney = $(this).is(':checked');
+			var storage = window.localStorage;
+			storage.setItem('settingHideTotalMoney', $(this).is(':checked'));
+		});
+		loadSetting();
+		$('#navMy').click();
+		getReady(window.location.href);
+		});
+		</script>
+		<style>
+		#searchBar form{
+			display:inline;
+		}
+		#searchBar{
+			margin:0;
+			padding:0;
+			width:100%;
+		}
+		#content{
+			border: 1px solid #CCC;
+			background: white;
+			height: 31px;
+			width:69.2%;
+		}
+		#selector{
+			border: 1px solid #CCC;
+			height: 33px;
+			width:20%;
+		}
+		#searchButton{
+			height: 33px;
+			border: 1px solid #CCC;
+			background: white;
+			width:10%;
+		}
+		#jj_suggest_result{
+		}
+		#showData{
+			background: white;
+		}
+		#navLayout{
+			height: 32px;
+			background: #6f889c;
+			font-weight: 600;
+		}
+		#navLayout a{
+			background: #6f889c;
+			width: 54px;
+			line-height: 32px;
+			text-align: center;
+			color: white;
+			display: inline-block;
+			position: relative;
+			float: left;
+		}
+		#navLayout a:nth-child(4){
+			background: #60798d;
+		}
+		#navLayout a{
+			color: white;
+		}
+		#padding10{
+		}
+		#addButton,#buyButton,#exportButton,#exportButton2,#importButton,#buyConfirm,#buyConcel,#dbButton{
+			padding:5px;
+			margin-right:5px;
+			border: 1px solid #CCC;
+			background: white;
+		}
+		#buyDiv input{
+			width:40px;
+		}
+		#addInfo{
+			display:none;
+		}
+		#myStockTable{
+		}
+		#myStockTable li:hover{
+			background-color:#eee;
+		}
+		#myStockTable li{
+			padding:10px;
+			border-bottom: 1px solid #CCC;
+		}
+		#myStockTable li:first-child{
+			background-color:#eee;
+		}
+		#myStockTable li:last-child{
+			padding:10px;
+		}
+		#myStockTable li span:first-child{
+			display:inline-block;
+			width:100px;
+		}
+		#myStockTable li span{
+			vertical-align:middle;
+			display:inline-block;
+			width:55px;
+		}
+		#myStockTable li span:nth-child(4),#myStockTable li span:nth-child(5){
+			margin-left:auto;
+			margin-right:auto;
+			text-align:center;
+		}
+		#myStockTable li span:nth-child(4){
+			height:25px;
+			line-height:25px;
+		}
+		#myStockTable li span:last-child{
+			display:inline-block;
+			width:35px;
+		}
+		#myStockTable p{
+			margin:0;
+		}
+		#myStockTable span p:last-child{
+			margin-top: 1px;
+			color: #858585;
+			font-size:xx-small;
+		}
+		#myBuy{
+		}
+		#myBuy li:hover{
+			background-color:#eee;
+		}
+		#myBuy li{
+			padding:10px;
+			border-bottom: 1px solid #CCC;
+		}
+		#myBuy li:first-child{
+			background-color:#eee;
+		}
+		#myBuy li:last-child{
+			background-color:#eee;
+			padding:10px;
+		}
+		#myBuy li span{
+			vertical-align:middle;
+			display:inline-block;
+			width:45px;
+		}
+		#myBuy li span:first-child{
+			display:inline-block;
+			width:70px;
+		}
+		#myBuy li span:nth-child(2),#myBuy li span:nth-child(5){
+			display:inline-block;
+			width:60px;
+		}
+		#myBuy li span:nth-child(5),#myBuy li span:nth-child(6){
+			margin-left:auto;
+			margin-right:auto;
+			text-align:center;
+		}
+		#myBuy li:gt(1) span:nth-child(5){
+			height:40px;
+			line-height:20px;
+		}
+		#myBuy li:last-child span:nth-child(2){
+			height:25px;
+			line-height:25px;
+		}
+		#myBuy li span:last-child{
+			display:inline-block;
+			width:35px;
+		}
+		#myBuy p{
+			margin:0;
+		}
+		#myBuy span p:last-child{
+			margin-top: 2px;
+			color: #858585;
+			font-size:xx-small;
+		}
+		#qrcode{
+			margin-top:5px;
+		}
+		#info{
+			font-weight:bold;
+			padding:10px;
+			border-bottom: 1px solid #CCC;
+		}
+		#info a{
+			color:white;
+		}
+		#info span{
+			color:white;
+			margin-right:10px;
+		}
+		#buyContent ul li{
+			margin-top:2px;
+		}
+		#buyContent ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:100px;
+		}
+		#price{
+			display:none;
+		}
+		#mainPrice ul:first-child{
+			padding:10px;
+			border-bottom: 1px solid #CCC;
+		}
+		#mainPrice ul:last-child{
+			padding:10px;
+			border-bottom: 1px solid #CCC;
+		}
+		#moreInfo{
+			padding:10px;
+			border-bottom: 1px solid #CCC;
+		}
+		#oldInfo{
+			display:none;
+		}
+		#priceDaily{
+			margin:10px;
+			display:none;
+		}
+		#priceMin{
+			margin:10px;
+			display:none;
+		}
+		#picMin,#picDaily{
+			border: 1px solid #CCC;
+		}
+		#setting{
+			padding: 10px;
+			border: 1px solid #CCC;
+		}
+		#setting div{
+			margin-top: 10;
+		}
+		#settingInterval{
+			width:50px;
+		}
+		#settingAutoUpdate,#settingHideTotalMoney{
+			margin-top: 0;
+			vertical-align:middle;
+		}
+		#eximportInput{
+			width:95%;
+			margin-top:5px;
+		}
+		
+		#eximportInfo{
+			word-break:break-all;
+			background:white;
+			overflow: hidden;
+		}
+		#time, #weather, #time a{
+			color:#999;
+		}
+		#time, #weather{
+		}
+		#contactme{
+			clear:both;
+			color:#ccc;
+		}
+		#contactme a{
+			color:#ccc;
+		}
+		#showMsg{
+			background: white;
+			padding: 10px;
+			position:absolute;
+			display:none;
+		}
+		#help{
+			font-size: small;
+			background: white;
+			border: 1px solid #CCC;
+			position:absolute;
+			display:none;
+			width: 300px
+		}
+		.stockMode ul li, .hkstockMode ul li , .futureMode ul li, .usstockMode ul li, .zsMode ul li, .fundMode ul li, .ifMode ul li, .tfMode ul li{
+			margin-top: 2px;
+		}
+		.stockMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:50px;
+		}
+		.stockMode ul span:first-child{
+			width:80px;
+		}
+		.forexMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:55px;
+		}
+		.zsMode ul li span:first-child,.zsMode ul li span a:first-child{
+			width:90px;
+		}
+		.zsMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:60px;
+		}
+		.fundMode ul li span{
+			display:-moz-inline-box;
+			display:inline-block;
+		}
+		.fundMode ul li span:first-child,.fundMode ul li span a:first-child{
+			width:170px;
+		}
+		.hkstockMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:60px;
+		}
+		.hkstockMode ul li span:first-child,.hkstockMode ul li span a:first-child{
+			width:90px;
+		}
+		.futureMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:50px;
+		}
+		.usstockMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:70px;
+		}
+		.usstockMode ul li span:first-child,.usstockMode ul li span a:first-child{
+			width:100px;
+		}
+		.ifMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:50px;
+		}
+		.ifMode ul li span:first-child,.stockMode ul li span a:first-child{
+			width:70px;
+		}
+		.tfMode ul span{
+			display:-moz-inline-box;
+			display:inline-block;
+			width:70px;
+		}
+		.arrow{
+			-webkit-transform: rotate(45deg);
+			height: 6px;
+			position: absolute;
+			width: 6px;
+			background: #60798d;
+			position: absolute;
+			bottom: -3px;
+			left: 24px;
+			display: block !Important;
+		}
+		.current{
+			background: #60798d;
+		}
+		.red{
+			margin-right:10px;
+			color:#fd2f3b;
+		}
+		.green{
+			margin-right:10px;
+			color:#1bc07c;
+		}
+		.white{
+			margin-right:10px;
+			color:#939393;
+		}
+		.left{
+			float:left;
+		}
+		.right{
+			float:right;
+		}
+		hr{
+			color:#999;	
+		}
+		a{
+			text-decoration:none;
+			color:black;	
+		}
+		a:visited{
+			color:black;	
+		}
+		ul{
+			margin:0;
+			padding:0;
+		}
+		li{
+			list-style-type:none;
+		}
+		span.green,span.red,span.white{
+			margin:0px 5px 0px 5px;
+		}
+		img{
+			max-width:100%;
+			height:auto;
+		}
+		body{
+			cursor:default;
+			font-size:small;
+			background: #f9f9f9;
+		}
+		*{
+			margin:0;
+			padding:0;
+		}
+</style>
+</head>
+<body>
+<div id="mainLayout">
+	<div id="searchBar"><input name="content" id="content" type="text" style="color:#999;" autocomplete="off"/><select id="selector"><option value="stock">股票</option><option value="fund">基金</option><option value="future">期货</option><option value="hkstock">港股</option><option value="usstock">美股</option><option value="forex">外汇</option><option value="zs">指数</option><option value="if">股指期货</option><option value="tf">国债期货</option><option value="bond">债券</option><option value="xx" selected>无</option></select><input class="button" id="searchButton" type="button" value="查询"/></div>
+	<div id="showData">
+	<div id="navLayout" class="navLayout">
+			<a href="#" id="navDaily">K线</a>
+			<a href="#" id="navMin">分时</a>
+			<a href="#" id="navPrice">详情</a>
+			<a href="#" class="current" id="navMy">自选<em class="arrow"></em></a>
+			<a href="#" id="navBuy">持仓</a>
+			<a href="#" id="navSetting">设置</a>
+	</div>
+	<div id="padding10">
+	<div id="myStock">
+	<ul id="myStockTable">
+	</ul>
+	</div>
+	
+	<div id="myBuy"></div>
+	<div id="price">
+	<div id="info"></div>
+	<div id="mainPrice">
+	</div>
+	<div id="moreInfo">
+	</div>
+	<div id="oldInfo">
+	</div>
+	</div>
+	<div id="picDaily"><img src=""/></div>
+	<div id="picMin"><img src=""/></div>
+	<div id="setting">
+	<div>更新间隔(秒):<input name="settingInterval" id="settingInterval" type="text" style="color:#999;" autocomplete="off" value="10"/></div>
+	<div>是否自动更新:<input id="settingAutoUpdate" type="checkbox"/></div>
+	<div>是否隐藏总资产:<input id="settingHideTotalMoney" type="checkbox"/></div>
+	<div id="buttonLayout"><input class="button" id="importButton" type="button" value="导入"/><input class="button" id="exportButton" type="button" value="导出"/><input class="button" id="exportButton2" type="button" value="导出(不包括持仓)"/><input class="button" id="dbButton" type="button" value="存入数据库"/></div>
+	<div id="eximportInfo"><span><input name="eximportInput" id="eximportInput" type="text" style="color:#999;" autocomplete="off" value=""/></span><span></span></div>
+	<div id="exportURL"></div>
+	</div>
+	</div>
+</div>
+<div id="footer">
+<div id="time" class="left"></div><div id="weather" class="right"></div>
+<div id="contactme"><span class="left"><a href="mailto:30204977@qq.com">Coded by Andy;</a></span><span class="right">帮助</span></div>
+</div>
+</div>
+<div id="showMsg"></div>
+<div id="help">普通查询，输入完代码后按回车键，用于有下拉提示框的项目<br/>手动查询，输入完代码后按空格或者点查询按钮，用于没下拉提示的项目，用于补充API的缺陷，如输入USBCNY查询外汇<br/>
+股票stock，基金fund，期货future，港股hkstock，美股usstock,指数zs大部分可自动提示。外汇forex需要手动查询<br/>另有网址查询模式，例index.html?content=600036,stock<br/>网址导入模式，例index.html?import=f_000198,fund,f_000343,fund<br/>默认不自动刷新<br/>详情查看时，股票名代码与更新时间的链接是当前网页<br/>图片只有点击按钮时才下载，省流量。一次数据约0.2KB，一张图片10KB<br/>点详情或自选时会更新数据<br/>为了统一，所有均为红涨绿跌<br/>持仓里的股票更新时间与自选一样，盈亏已减掉佣金<br/>信息只保存在本机，不上传到服务器<br/>除了点击存入数据库，其他的不需要数据库<br/>将ID输入到文本框点导入后完成导入<br/>存入数据库前先点击导出</div>
+</body>
+</html>
+<!--
+var hq_str_USDCNY="20:39:11,6.2373,6.2383,6.2272,101,6.2346,6.2373,6.2272,6.2373,美元人民币";
+时间 现价 卖出价 昨收盘 振幅 今开盘 最高价 最低价 买入价 名称
+
+var hq_str_hk00008="PCCW,电讯盈科,4.070,4.042,4.080,4.000,4.060,0.018,0.445,4.060,4.070,28945320,7136543,15.615,4.975,4.230,3.160,2014/05/12,15:59";
+代码 名称 今开 昨收 最高 最低  现价 涨幅 涨幅% x x  x x 市盈率  x 52周最高 52周最低 日期 时间
+
+var hq_str_gb_goog="谷歌,526.18,1.44,2014-05-12 23:02:36,7.45,523.51,526.84,504.20,1228.88,502.80,674255,2168100,
+177427895999,18.83,27.94,0.00,1.15,0.00,0.00,337200000,3.00,0.00,0.00,0.00,,May 12 11:01AM EDT,518.73,0.00";
+名称 现价 涨幅% 日期 时间 涨幅 开盘 区间504.20-526.84 52周区间502.80-1228.88 成交量 10日均量
+市值 每股收益 市盈率 x 贝塔系数 x x 股本 x x x x x 日期 前收盘 x 
+
+	股票
+	0：”大秦铁路”，股票名字；
+	1：”27.55″，今日开盘价；
+	2：”27.25″，昨日收盘价；
+	3：”26.91″，当前价格；
+	4：”27.55″，今日最高价；
+	5：”26.20″，今日最低价；
+	6：”26.91″，竞买价，即“买一”报价；
+	7：”26.92″，竞卖价，即“卖一”报价；
+	8：”22114263″，成交的股票数，由于股票交易以一百股为基本单位，所以在使用时，通常把该值除以一百；
+	9：”589824680″，成交金额，单位为“元”，为了一目了然，通常以“万元”为成交金额的单位，所以通常把该值除以一万；
+	10：”4695″，“买一”申请4695股，即47手；
+	11：”26.91″，“买一”报价；
+	12：”57590″，“买二”
+	13：”26.90″，“买二”
+	14：”14700″，“买三”
+	15：”26.89″，“买三”
+	16：”14300″，“买四”
+	17：”26.88″，“买四”
+	18：”15100″，“买五”
+	19：”26.87″，“买五”
+	20：”3100″，“卖一”申报3100股，即31手；
+	21：”26.92″，“卖一”报价
+	(22, 23), (24, 25), (26,27), (28, 29)分别为“卖二”至“卖四的情况”
+	30：”2008-01-11″，日期；
+	31：”15:05:32″，时间；
+	
+	http://image.sinajs.cn/newchart/min/n/sh000001.gif
+	http://image.sinajs.cn/newchart/daily/n/sh000001.gif
+	
+	s_
+	
+	最新 涨跌 涨幅 总手 金额
+	<!--
+	期货
+	名字，时间，今开，最高，最低,x，买入，卖出，最新，结算，昨结，买数，卖数，持仓，总量，交易所，品种，日期
+	 0      1     2      3     4       6    7     8    9    10    11      12     13    14    15     16   17
+
+	http://image.sinajs.cn/newchart/v5/futures/min/Y1301.gif
+	http://image.sinajs.cn/newchart/v5/futures/daily/Y1301.gif
+	
+基金
+f_
+名字	每万份收益  七日年化收益率%   日期  规模
+	
+期货
+
+			var s = 'http://stock1.sina.cn/dpool/stockv2/future/future_quote.php?code=AU1412';
+			var x = 'http://finance.sina.com.cn/futures/quotes/AU1412.shtml';
+			
+http://hq.sinajs.cn/rn=1318986550609&list=hf_CL,hf_GC,hf_SI,hf_CAD,hf_ZSD,hf_S,hf_C,hf_W
+var hq_str_AU1406="黄金1406,143305,261.05,261.65,259.70,
+258.95,
+259.95,260.05,259.95,260.95,258.85,15,69,58854,52604,沪,黄金,2014-05-13";
+
+名称 时间 开盘 最高 最低 
+x 
+买价 卖价 最新价 结算价 昨结算 买量 卖量 持仓量 成交量
+
+rt_hk
+hk
+CHEUNG KONG 长江实业 134.200 133.000 134.600 132.100 134.000 1.000 0.752 134.000 134.100 331866654 2486760 8.804 2.597 138.000 98.000 2014/05/14 14:15:04
+
+enname0 cnname1       2今开盘  3昨收盘  4最高    5最低    6现价   7涨幅   8涨幅% x       10成交价  11成交额   12成交量      13市盈率   15 52周最高
+16 52周最低 17更新时间
+"CCB,建设银行,5.430,5.390,5.530,5.390,5.500,0.110,2.041,5.500,5.510,1216414777,222399156,5.000,5.455,6.580,4.890,2014/05/14,14:39:03";
+
+add 10 13 15 16
+
+USA
+http://image.sinajs.cn/newchart/v5/usstock/min/xom.gif?1400054508295
+http://image.sinajs.cn/newchart/usstock/daily/xom.gif?1400054538786
+var hq_str_gb_goog="
+谷歌,533.09,0.60,2014-05-14 19:57:57,3.17,530.89,536.07,529.51,1228.88,502.80,1648907,
+1921934,179757948000,18.83,28.31,0.00,1.14,0.00,0.00,337200000,3.00,532.88,-0.04,-0.21,
+May 14 07:28AM EDT,May 13 04:00PM EDT,529.92,131.00";
+
+name 现价 涨幅% time 4涨幅 5今开 6最高 7最低 52周最高 52周最低 10成交量/万
+10日均量/万 12市值/亿 每股收益 14市盈率  x 贝塔系数 x x 19股本/亿 x x x x x 25time 26 昨收 x
+
+var hq_str_usr_goog="谷歌,530.26,-0.53,2014-05-14 22:33:39,-2.83,533.00,533.00,527.92,1228.88,502.80,268907,1921934,178803840600,18.83,28.16,0.00,1.14,0.00,0.00,337200000,3.00,0.00,0.00,0.00,,May 14 10:33AM EDT,533.09,0.00";
+
+1 name
+2 x
+3 
+
+http://dp.sina.cn/dpool/stock_new/v2/nasdaq_single.php?code=GOOG
+//hq.sinajs.cn/wskt?list=usr_sanwz
+外汇
+http://hq.sinajs.cn/rn=1318986628214&list=USDCNY,USDHKD,EURCNY,GBPCNY,USDJPY,EURUSD,GBPUSD,AUDHKD
+
+search
+搜索
+http://suggest3.sinajs.cn/suggest/key=00019
+http://biz.finance.sina.com.cn/suggest/lookup_n.php?q=000198
+
+指数
+var hq_str_sz399001="
+
+深证成指,7309.875,7325.522,7213.770,7309.875,7205.705,0.000,0.000,9119113817,77087410369.850,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,2014-05-15,15:05:46,00";
+
+name 1今开 2昨收 3最新 4最高 5最低 x x 8成交量/10000 00 万手 9成交额/100000000 亿    time 30,31
+var hq_str_sz399002="
+成份Ａ指,8348.713,8366.584,8238.951,8348.713,8229.740,0.000,0.000,769067940,6601381774.850,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,2014-05-15,15:05:46,00";
+
+var hq_str_USDCNY="20:54:51,6.2304,6.2314,6.2287,65,6.2293,6.2313,6.2248,6.2304,美元人民币";
+0时间 					   1买入  2卖出价3昨收   4振幅5今开6最高7最低   现价  名字 
+
+var hq_str_CFF_RE_IF1405="
+2140.0,2151.4,2136.2,2142.2,60612,38990400000,2641,2142.2,,2577.2,1718.4,,,2147.4,2147.8,18915,0,0,--,--,--,--,--,--,--,--,0,0,--,--,--,--,--,--,--,--,2014-05-16,15:00:15,0";
+
+开盘 1最高 2最低 最新 成交量手 5成交额/亿 持仓量手 7x x 9x 10x 11 12 13昨收 14昨结 15x 36 37 time
+
+var hq_str_CFF_RE_TF1406="
+
+92.812,93.000,92.812,92.948,380,353213000,1529,92.948,,94.772,91.056,,,92.900,92.914,1748,0,0,--,--,--,--,--,--,--,--,0,0,--,--,--,--,--,--,--,--,2014-05-16,15:15:15,0";
+
+开盘 1最高 2最低 最新 成交量手 5x 持仓量手 7x x 9x 10x 11 12 13昨收 14昨结 15x 36 37 time
+
+
+var hq_str_sh010512="05国债⑿,99.300,99.020,99.400,99.400,99.300,98.830,99.390,170,16891,10,98.830,50,98.820,50,98.500,10,94.690,0,0.000,50,99.390,10,99.400,270,100.280,270,100.290,60,100.300,2014-12-15,15:03:02,00";
+
+name,今开，昨收，现价，最高，最低，买1，卖1，成交量/10，成交额，买1量/10，买1，买2，量，买3，量，买4，量，买5，量，卖1量，价，卖2量，价，卖3量，价，卖4量，价，卖5量，价，日期，时间，
+-->
