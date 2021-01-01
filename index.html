@@ -164,6 +164,7 @@
 					var oldInfo = $('#oldInfo').html();
 					elements = result.split(',');
 					writeToHtml(code, elements, mode, oldInfo, result);
+					console.log(elements);
                 }
 			});
 			
@@ -216,7 +217,9 @@
 					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + elements[3] + ',' + zhangdie + ',' + elements[30] + ' ' + elements[31];
 				}
 				else if (mode[i] == 'fund'){
-				    zhangdie = parseFloat((parseFloat(elements[2]).toFixed(4) - parseFloat(elements[3]).toFixed(4)) / parseFloat(elements[2]).toFixed(4) * 100).toFixed(2) + '%';
+				    zhangdie = parseFloat((parseFloat(elements[1]).toFixed(4) - parseFloat(elements[3]).toFixed(4)) / parseFloat(elements[3]).toFixed(4) * 100).toFixed(2) + '%';
+					console.log(elements[1])
+					console.log(elements[3])
 					info = code[i] + ',' + mode[i] + ',' + elements[0] + ',' + parseFloat(elements[1]).toFixed(4) + ',' +  zhangdie + ',' + elements[4];
 					//  20210101
 					//  console.log(parseFloat((parseFloat(elements[2]).toFixed(4) - parseFloat(elements[3]).toFixed(4)) / parseFloat(elements[2]).toFixed(4) * 100).toFixed(2))
@@ -521,7 +524,6 @@
 					prefix163 = '0';
 				}
 				if (getDevice() == 'win'){
-				console.log(code)
 					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/realstock/company/' + code + '/nc.shtml">新浪财经</a> <a  target="_blank" href="http://quote.eastmoney.com/' + code + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a> <a target="_blank" href="https://gu.qq.com/' + code.substr(0, 2) + code.substr(2, 7) + '">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/' + prefix163 + code.substr(2, 7) + '.html">网易财经</a> <a target="_blank" href="http://q.stock.sohu.com/cn/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/stock/' + code + '/">凤凰财经</a> <a target="_blank" href="http://stockdata.stock.hexun.com/' + code.substr(2, 7) + '.shtml">和讯</a>');
 				}
 				else
@@ -1396,7 +1398,7 @@
 			$('#buyPrice').val($('#addInfo').html().split(',')[3]);
 			$('#buyAmount').val('00');
 			$('#buyContent span').css('color','black');
-			console.log($('#buyContent span').css('color'));
+			//console.log($('#buyContent span').css('color'));
 		});	
 		$(document).on('click', '#buyConfirm', function(){
 			$('#addButton').click();
