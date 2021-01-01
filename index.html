@@ -521,11 +521,16 @@
 				if (code[1] == 'h'){
 					prefix163 = '0';
 				}
+				var prefixDF = '0';
+				if (code[1] == 'h'){
+					prefixDF = '1';
+				}
+				
 				if (getDevice() == 'win'){
 					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/realstock/company/' + code + '/nc.shtml">新浪财经</a> <a  target="_blank" href="http://quote.eastmoney.com/' + code + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a> <a target="_blank" href="https://gu.qq.com/' + code.substr(0, 2) + code.substr(2, 7) + '">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/' + prefix163 + code.substr(2, 7) + '.html">网易财经</a> <a target="_blank" href="http://q.stock.sohu.com/cn/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/stock/' + code + '/">凤凰财经</a> <a target="_blank" href="http://stockdata.stock.hexun.com/' + code.substr(2, 7) + '.shtml">和讯</a>');
 				}
 				else
-					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/sh/?code=' + code + '">新浪财经</a> <a target="_blank" href="http://m.quote.eastmoney.com/stock,' + code.substr(2, 7) + '.shtml">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a>');
+					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/sh/?code=' + code + '">新浪财经</a> <a  target="_blank" href="https://wap.eastmoney.com/quote/stock/' + prefixDF + '.' + code.substr(2, 7) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/' + code + '">雪球</a>');
 			}
 			else if (mode == 'fund'){
 				$('#mainPrice').removeClass().addClass('fundMode');
