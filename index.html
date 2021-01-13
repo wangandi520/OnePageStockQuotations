@@ -5,9 +5,9 @@
 		<meta charset="gb2312">
 		<link rel="shortcut icon" href="favicon.ico"/>
 		<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
-		<script type="text/javascript" src="http://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
-		<script type="text/javascript" src="http://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
-		<script type="text/javascript" src="http://www.eastmoney.com/js/StockSuggest.js"></script>
+		<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script type="text/javascript" src="https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+		<script type="text/javascript" src="https://www.eastmoney.com/js/StockSuggest.js"></script>
 		<script type="text/javascript" language="JavaScript">
 		//weather add js http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=js
 			setTimeout(function(){
@@ -154,7 +154,7 @@
 			}
 			$.ajax({
 				dataType:'script',
-				url:'http://hq.sinajs.cn/list=' + code,
+				url:'https://hq.sinajs.cn/list=' + code,
 				cache: true,
 				async: false,
 				success:function(){
@@ -177,7 +177,7 @@
 			return;
 			$.ajax({
 				dataType:'script',
-				url:'http://hq.sinajs.cn/list=' + code,
+				url:'https://hq.sinajs.cn/list=' + code,
 				cache: true,
 				async: false,
 				success:function(){
@@ -259,33 +259,33 @@
 			var code = value[0];
 			var mode = value[1];
 			if (mode == 'zs'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'stock'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'fund'){
 			}
 			else if (mode == 'future'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/v5/finance/futures/wap/minline/310/' + code + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/v5/finance/futures/wap/minline/310/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'hkstock'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/hk_stock/wap_min4/' + code.substr(5, 10) + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/hk_stock/wap_min4/' + code.substr(5, 10) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'usstock'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/v5/usstock/min/' + code.substr(4, 10) + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/v5/usstock/min/' + code.substr(4, 10) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'forex'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/v5/forex/real/min30_w03/' + code + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/v5/forex/real/min30_w03/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'if'){
-				$('#picMin img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/minw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://r3.sinaimg.cn/3g/static/images/finance/futures/real/minw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'tf'){
-				$('#picMin img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/minw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://r3.sinaimg.cn/3g/static/images/finance/futures/real/minw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'bond'){
-				$('#picMin img').attr('src', 'http://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
+				$('#picMin img').attr('src', 'https://image.sinajs.cn/newchart/min/n/' + code + '.gif?' + new Date().getTime());
 			}
 		}
 		
@@ -298,33 +298,33 @@
 			var code = value[0];
 			var mode = value[1];
 			if (mode == 'zs'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'stock'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'fund'){
 			}
 			else if (mode == 'future'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/v5/finance/futures/wap/daily/310/' + code + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/v5/finance/futures/wap/daily/310/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'hkstock'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/hk_stock/daily_wap4/' + code.substr(5, 10) + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/hk_stock/daily_wap4/' + code.substr(5, 10) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'usstock'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/usstock/daily/' + code.substr(4, 10) + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/usstock/daily/' + code.substr(4, 10) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'forex'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/v5/forex/k/day_w03/' + code + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/v5/forex/k/day_w03/' + code + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'if'){
-				$('#picDaily img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/kdayw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://r3.sinaimg.cn/3g/static/images/finance/futures/real/kdayw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'tf'){
-				$('#picDaily img').attr('src', 'http://r3.sinaimg.cn/3g/static/images/finance/futures/real/kdayw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://r3.sinaimg.cn/3g/static/images/finance/futures/real/kdayw2/' + code.substr(7, 13) + '.gif?' + new Date().getTime());
 			}
 			else if (mode == 'bond'){
-				$('#picDaily img').attr('src', 'http://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
+				$('#picDaily img').attr('src', 'https://image.sinajs.cn/newchart/daily/n/' + code + '.gif?' + new Date().getTime());
 			}
 		}
 		
@@ -1048,7 +1048,7 @@
 		function getWeather(){
 		$.ajax({
 			dataType:'script',
-			url:'http://php.weather.sina.com.cn/js.php?city=' + remote_ip_info.city + '&password=DJOYnieT8234jlsK&day=0',
+			url:'https://php.weather.sina.com.cn/js.php?city=' + remote_ip_info.city + '&password=DJOYnieT8234jlsK&day=0',
 			cache: true,
 			async: false,
 			success:function(){
@@ -1243,7 +1243,7 @@
 		var newprice = 0;
 		var amount = 0;
 		var code = '';
-		for(var i = 1; i < $('#myBuy li').size(); i++){
+		for(var i = 1; i < $('#myBuy li').length; i++){
 			totalearn += parseFloat($('#myBuy li:eq(' + i + ') span:eq(4) p:first-child').html());
 			oldprice = $('#myBuy li:eq(' + i + ') span:eq(2)').html();
 			newprice = $('#myBuy li:eq(' + i + ') span:eq(3)').html();
@@ -1257,7 +1257,7 @@
 		var storage = window.localStorage;
 		$('#myBuy').append('<li><span>总资产</span><span>' + parseFloat(totalmoney).toFixed(2) + '</span><span></span><span>总盈亏</span><span><p>' + parseFloat(totalearn).toFixed(2) + '</p><p>' + parseFloat(totalearn / totaloldmoney * 100).toFixed(2) +'%</p></span><span></span></li>');
 		}
-		for(var i = 1; i < $('#myBuy li').size(); i++){
+		for(var i = 1; i < $('#myBuy li').length; i++){
 				var symbol = $('#myBuy li:eq(' + i + ') span:eq(4) p:first-child').html();
 				var color = '#939393';
 				if (symbol[0] == '-')
@@ -1275,7 +1275,7 @@
 				$('#myStockTable').append('<li><span class="' + elements[0] + ',' + elements[1] + '"><p>' + elements[2] + '</p><p>' + elements[5] + '</p></span><span>' + getSelector(elements[1]) + '</span><span>' + elements[3] +'</span><span>' + elements[4] + '</span><span class="' + elements[0] +'">删除</span></li>');
 			}
 			//上色
-			for(var i = 1; i < $('#myStockTable li').size(); i++){
+			for(var i = 1; i < $('#myStockTable li').length; i++){
 				var symbol = $('#myStockTable li:eq(' + i + ') span:eq(3)').html();
 				var color = '#939393';
 				var mode = $('#myStockTable li:eq(' + i + ') span:eq(1)').html();
@@ -1378,7 +1378,7 @@
 		$.ajax({
 			async:false,
             type: "get",
-            url: "http://api.t.sina.com.cn/short_url/shorten.json?source=166551182&url_long=" + myurl,
+            url: "https://api.t.sina.com.cn/short_url/shorten.json?source=166551182&url_long=" + myurl,
             dataType: "jsonp",
             jsonp: "callback",
             jsonpCallback:"handler",
