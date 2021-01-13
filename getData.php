@@ -49,6 +49,7 @@ mysql_close($con);
 }
 else
 echo 'Error';
+
 /*
 CREATE TABLE IF NOT EXISTS `data` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
