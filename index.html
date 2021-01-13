@@ -537,10 +537,9 @@
 				
 				
 				document.title = elements[0];
-				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(2, 7) + ',fund">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
-				+ code + ',' + mode + ',' + elements[0] + ',' + elements[1] + ',' +  elements[2] + ',' + elements[4] + '</span>');
+				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(2, 7) + ',fund">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'	+ code + ',' + mode + ',' + elements[0] + ',' + elements[1] + ',' +  elements[2] + ',' + elements[4] + '</span><span id="buyDiv"><input id="buyButtonFund" type="button" value="持仓"/><span id="buyContent"></span>');
 				$('#mainPrice').html('<ul><li><span>七日年化收益率(累计净值)</span><span>'
-				+ Number(elements[2]).toFixed(3) + '</span></li><li><span>每万份收益(单位净值)</span><span>' + Number(elements[1]).toFixed(4) + '</span></li><li><span>规模(亿元)</span>' + elements[5] + '</span></li><li><span id="buyDiv"><input id="buyButtonFund" type="button" value="持仓"/><span id="buyContent"></span></li></ul>');
+				+ Number(elements[2]).toFixed(3) + '</span></li><li><span>每万份收益(单位净值)</span><span>' + Number(elements[1]).toFixed(4) + '</span></li><li><span>规模(亿元)</span>' + elements[5] + '</span></li></ul>');
 				//andyy
 				$('#info').css('background','white'); 
 				$('#info a').css('color','black'); 
@@ -556,7 +555,7 @@
 					prefixHX = '1';
 				}
 				if (getDevice() == 'win'){
-					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/fund/quotes/' + code.substr(2, 7) + '/bc.shtml">新浪财经</a> <a target="_blank" href="http://fund.eastmoney.com/' + code.substr(2, 7) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/F' + code.substr(2, 7) + '">雪球</a> <a target="_blank" href="http://gu.qq.com/jj' + code.substr(2, 7) + '">腾讯财经</a> <a target="_blank" href="http://quotes.money.163.com/fund/' + code.substr(2, 7) + '.html">网易财经</a> <a target="_blank" href="http://q.fund.sohu.com/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a> <a target="_blank" href="http://finance.ifeng.com/app/hq/fund/of' + code.substr(2, 7) + '/">凤凰财经</a> <a target="_blank" href="http://jingzhi.funds.hexun.com/' + code.substr(2, 7) + '.shtml">和讯</a>');		
+					$('#moreInfo').html('<a target="_blank" href="http://finance.sina.com.cn/fund/quotes/' + code.substr(2, 7) + '/bc.shtml">新浪财经</a> <a target="_blank" href="http://fund.eastmoney.com/' + code.substr(2, 7) + '.html">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/F' + code.substr(2, 7) + '">雪球</a> <a target="_blank" href="http://gu.qq.com/jj' + code.substr(2, 7) + '">腾讯财经</a> <a target="_blank" href="http://q.fund.sohu.com/'+ code.substr(2, 7) + '/index.shtml">搜狐证券</a>');		
 				}
 				else
 					$('#moreInfo').html('<a target="_blank" href="http://stocks.sina.cn/fund/?code=' + code.substr(2, 7) + '">新浪财经</a> <a target="_blank" href="http://wap.eastmoney.com/3g/fund/fund,' + code.substr(2, 7) + '.shtml">东方财富</a> <a target="_blank" href="http://xueqiu.com/S/F' + code.substr(2, 7) + '">雪球</a>');
