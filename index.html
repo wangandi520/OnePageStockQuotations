@@ -164,7 +164,7 @@
 					var oldInfo = $('#oldInfo').html();
 					elements = result.split(',');
 					writeToHtml(code, elements, mode, oldInfo, result);
-					console.log(elements);
+					//console.log(elements);
                 }
 			});
 			
@@ -188,7 +188,7 @@
 						result[i] = eval("hq_str_" + newCode[i]);
 					}
 					writeToMyStock(code, result, mode);
-					console.log(result);
+					//console.log(result);
 				}
 			});
 		}
@@ -540,7 +540,8 @@
 				$('#info').html('<span><a target="_blank" href="./index.html?content=' + code.substr(2, 7) + ',fund">' + elements[0] + ' ' + code.substr(2, 7) + '</a></span><input class="' + code + '"id="addButton" type="button" value="添加"/><span id="addInfo">'
 				+ code + ',' + mode + ',' + elements[0] + ',' + elements[1] + ',' +  elements[2] + ',' + elements[4] + '</span>');
 				$('#mainPrice').html('<ul><li><span>七日年化收益率(累计净值)</span><span>'
-				+ Number(elements[2]).toFixed(3) + '</span></li><li><span>每万份收益(单位净值)</span><span>' + Number(elements[1]).toFixed(4) + '</span></li><li><span>规模(亿元)</span>' + elements[5] + '</span></li></ul>');
+				+ Number(elements[2]).toFixed(3) + '</span></li><li><span>每万份收益(单位净值)</span><span>' + Number(elements[1]).toFixed(4) + '</span></li><li><span>规模(亿元)</span>' + elements[5] + '</span></li><li><span id="buyDiv"><input id="buyButtonFund" type="button" value="持仓"/><span id="buyContent"></span></li></ul>');
+				//andyy
 				$('#info').css('background','white'); 
 				$('#info a').css('color','black'); 
 				$('#info span').css('color','black'); 
@@ -1211,9 +1212,12 @@
 		var elementss = newStorage.split(';');
 		var storage = window.localStorage;
 		$('#myBuy').html('<li><span>持仓</span><span>数量</span><span>买价</span><span>现价</span><span>盈亏</span><span id="clearMyBuy">清空</span></li>');
+		//andyy
 		for(var i = 0; i < storage.length ; i++){
 			if (storage.key(i).indexOf("buy") == 0){
 				var elements = storage.getItem(storage.key(i)).split(',');
+				//console.log(elements);
+				if (elements[1] == 'stock'){
 				var yongjin = (elements[3] *  elements[4] *  elements[5]/10000);
 				if (yongjin < 5)
 					yongjin = 5;
@@ -1222,6 +1226,14 @@
 					xianjia = storage.getItem(elements[0]).split(',')[6];
 				var zhangdie = parseFloat(((xianjia - elements[4]) * elements[3] - yongjin) / (elements[4] * elements[3]) * 100).toFixed(2) + '%';
 				$('#myBuy').append('<li><span class="' + elements[0] + ',' + elements[1] + '"><p>' + storage.getItem(elements[0]).split(',')[2] + '</p><p>' + storage.getItem(elements[0]).split(',')[5] + '</p></span><span>' + elements[3] + '</span><span>' + parseFloat(elements[4]).toFixed(2) + '</span><span>' + xianjia +'</span><span><p>' + ((xianjia - elements[4]) * elements[3] - yongjin).toFixed(2) + '</p><p>' + zhangdie + '</p></span><span class="' + elements[0] +'">删除</span></li>');
+				}
+				else if (elements[1] == 'fund'){
+				var xianjia = storage.getItem(elements[0]).split(',')[3];
+				var zhangdie = parseFloat((xianjia - elements[5]) / elements[5]).toFixed(4) * 100 + '%';
+				//console.log(zhangdie);
+				$('#myBuy').append('<li><span class="' + elements[0] + ',' + elements[1] + '"><p>' + storage.getItem(elements[0]).split(',')[2] + '</p><p>' + storage.getItem(elements[0]).split(',')[5] + '</p></span><span>' + elements[4] + '</span><span>' + parseFloat(elements[5]).toFixed(4) + '</span><span>' + xianjia +'</span><span><p>' + ((xianjia - elements[5]) * elements[4]).toFixed(2) + '</p><p>' + zhangdie + '</p></span><span class="' + elements[0] +'">删除</span></li>');
+				
+				}
 			}
 		}
 		if ($('#myBuy li').length > 1){
@@ -1305,7 +1317,11 @@
 			}
 			for (var i = 0; i < every.length; i++){
 				var tmp = every[i].split(',');
-				if (tmp[0].indexOf("buy") == 0)
+				//console.log(tmp);
+				//andyy
+				if (tmp[0].indexOf("buyf") == 0)
+					localStorage.setItem(tmp[0], tmp[0].substr(3,tmp[0].length - 1) + ',' + tmp[1] + ',,,' + tmp[2] + ',' + tmp[3] + ',');
+				else if (tmp[0].indexOf("buy") == 0)
 					localStorage.setItem(tmp[0], tmp[0].substr(3,tmp[0].length - 1) + ',' + tmp[1] + ',,' + tmp[2] + ',' + tmp[3] + ',' + tmp[4]);
 				else
 					localStorage.setItem(tmp[0], tmp[0] + ',' + tmp[1] + ',未更新,未更新,未更新,未更新');
@@ -1403,6 +1419,12 @@
 			$('#buyContent span').css('color','black');
 			//console.log($('#buyContent span').css('color'));
 		});	
+		$(document).on('click', '#buyButtonFund', function(){
+			$('#buyContent').html('<ul><li><span>持仓份额</span><span><input id="buyCountFund" type="text" autocomplete="off"/></span></li><li><span>净值</span><span><input id="buyFeeFund" type="text" autocomplete="off"/></span></li><li><input class="button" id="buyConfirmFund" type="button" value="确认"/><input class="button" id="buyConcelFund" type="button" value="取消"/></li></ul>');
+			$('#buyContent span').css('color','black');
+			//console.log($('#buyContent span').css('color'));
+		});	
+		//andyy
 		$(document).on('click', '#buyConfirm', function(){
 			$('#addButton').click();
 			if ($('#buyAmount').val() != '' && $('#buyPrice').val() != '' && $('#buyFee').val() != ''){
@@ -1414,7 +1436,24 @@
 			$('#buyContent').html('');
 			}
 		});	
+		$(document).on('click', '#buyConfirmFund', function(){
+			$('#addButton').click();
+			if ($('#buyFeeFund').val() != ''){
+			var info = $('#addInfo').html();
+			//console.log(info);
+			//andyy
+			var code = info.split(',')[0];
+			var value = code.split(',')[0] + ',' + info.split(',')[1] + ',' + info.split(',')[2] + ',' + info.split(',')[3] + ',' + $('#buyCountFund').val() + ',' + $('#buyFeeFund').val() + ',' + info.split(',')[5];
+			//console.log(value);
+			var storage = window.localStorage;
+			storage.setItem('buy' + code.split(',')[0],value);
+			$('#buyContent').html('');
+			}
+		});	
 		$(document).on('click', '#buyConcel', function(){
+			$('#buyContent').html('');
+		});	
+		$(document).on('click', '#buyConcelFund', function(){
 			$('#buyContent').html('');
 		});	
 		
@@ -1514,7 +1553,9 @@
 					continue;
 				var tmp = storage.getItem(storage.key(i));
 				tmp = tmp.split(',');
-				if (storage.key(i).indexOf("buy") == 0)
+				if (storage.key(i).indexOf("buyf") == 0)
+				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ',' + tmp[4] + ',' + tmp[5] +';';
+				else if  (storage.key(i).indexOf("buy") == 0)
 				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ',' + tmp[3] + ',' + tmp[4] + ',' + tmp[5] +';';
 				else
 				exportMsg = exportMsg + storage.key(i) + ',' + tmp[1] + ';';
@@ -1689,7 +1730,7 @@
 		}
 		#padding10{
 		}
-		#addButton,#buyButton,#exportButton,#exportButton2,#importButton,#buyConfirm,#buyConcel,#dbButton{
+		#addButton,#buyButton,#buyButtonFund,#exportButton,#exportButton2,#importButton,#buyConfirm,#buyConfirmFund,#buyConcel,#buyConcelFund,#dbButton{
 			padding:5px;
 			margin-right:5px;
 			border: 1px solid #CCC;
