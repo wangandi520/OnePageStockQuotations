@@ -158,11 +158,19 @@
 			else if (mode == 'tf') {
 				code = code.toUpperCase();
 			}
+			
+			jQuery.ajaxSetup({
+				'beforeSend': function(xhr) {xhr.setRequestHeader("Referer", "https://finance.sina.com.cn/stock")}
+			})
+
 			$.ajax({
 				dataType: 'script',
 				url: 'https://hq.sinajs.cn/list=' + code,
 				cache: true,
 				async: false,
+				// headers: {'X-Alt-Referer': 'https://finance.sina.com.cn/stock' },
+				headers: {"X-Alt-Referer":"https://finance.sina.com.cn/stock"},
+				//headers: {"Referer":"https://finance.sina.com.cn/stock"},
 				success: function () {
 					var result = '';
 					var elements = new Array();
@@ -186,6 +194,7 @@
 				url: 'https://hq.sinajs.cn/list=' + code,
 				cache: true,
 				async: false,
+				headers: {"X-Alt-Referer":"https://finance.sina.com.cn/stock"},
 				success: function () {
 					//result数据的数组
 					var result = new Array();
