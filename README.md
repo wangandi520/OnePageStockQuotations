@@ -1,7 +1,8 @@
-20241008更新
+## 20241008修复不能使用的问题，需浏览器安装插件
 
 使用不了的问题，浏览器安装插件modheader，+mod，request header，name填Referer，value填https://finance.sina.com.cn
 
+## 使用方法
 
 普通查询，输入完代码后按回车键，用于有下拉提示框的项目
 
