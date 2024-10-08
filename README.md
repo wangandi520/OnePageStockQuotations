@@ -1,3 +1,8 @@
+20241008更新
+
+使用不了的问题，浏览器安装插件modheader，+mod，request header，name填Referer，value填https://finance.sina.com.cn
+
+
 普通查询，输入完代码后按回车键，用于有下拉提示框的项目
 
 手动查询，输入完代码后按空格或者点查询按钮，用于没下拉提示的项目，用于补充API的缺陷，如输入USBCNY查询外汇

@@ -4,9 +4,9 @@
 
 import requests
 
-myUrl = 'https://hq.sinajs.cn/list=sh600001'
+myUrl = 'https://hq.sinajs.cn/list=sh600031'
 
-headers={'Referer':'https://finance.sina.com.cn/stock'}
+headers={'Referer':'https://finance.sina.com.cn'}
 
 response = requests.post(myUrl, headers = headers)
 if response.status_code == 200:
